@@ -22,10 +22,6 @@ define([
 
     var widgetForDrag;
 
-    function getElementColor(element) {
-        return Color.fromCssColorString(window.getComputedStyle(element).getPropertyValue('color'));
-    }
-
     function subscribeAndEvaluate(owner, observablePropertyName, callback, target) {
         callback.call(target, owner[observablePropertyName]);
         return knockout.getObservable(owner, observablePropertyName).subscribe(callback, target);
@@ -69,16 +65,6 @@ define([
     function setShuttleRingPointer(shuttleRingPointer, knobOuter, angle) {
         shuttleRingPointer.setAttribute('transform', 'translate(100,100) rotate(' + angle + ')');
         knobOuter.setAttribute('transform', 'rotate(' + angle + ')');
-    }
-
-    var makeColorStringScratch = new Color();
-    function makeColorString(background, gradient) {
-        var gradientAlpha = gradient.alpha;
-        var backgroundAlpha = 1.0 - gradientAlpha;
-        makeColorStringScratch.red = (background.red * backgroundAlpha) + (gradient.red * gradientAlpha);
-        makeColorStringScratch.green = (background.green * backgroundAlpha) + (gradient.green * gradientAlpha);
-        makeColorStringScratch.blue = (background.blue * backgroundAlpha) + (gradient.blue * gradientAlpha);
-        return makeColorStringScratch.toCssColorString();
     }
 
     function rectButton(x, y, path) {
@@ -352,7 +338,7 @@ define([
         cssStyle.textContent = '.cesium-animation-rectButton .cesium-animation-buttonGlow { filter: url(#animation_blurred); }\
 .cesium-animation-rectButton .cesium-animation-buttonMain .cesium-animation-buttonToggled .cesium-animation-buttonMain \
 .cesium-animation-rectButton:hover .cesium-animation-buttonMain .cesium-animation-buttonDisabled .cesium-animation-buttonMain \
-.cesium-animation-shuttleRingG .cesium-animation-shuttleRingSwoosh .cesium-animation-shuttleRingG:hover .cesium-animation-shuttleRingSwoosh \
+.cesium-animation-shuttleRingG .cesium-animation-shuttleRingG:hover \
 .cesium-animation-shuttleRingPointer .cesium-animation-shuttleRingPausePointer .cesium-animation-knobOuter .cesium-animation-knobInner';
 
         document.head.insertBefore(cssStyle, document.head.childNodes[0]);
@@ -364,9 +350,7 @@ define([
 <div class="cesium-animation-themeSelect"></div>\
 <div class="cesium-animation-themeDisabled"></div>\
 <div class="cesium-animation-themeKnob"></div>\
-<div class="cesium-animation-themePointer"></div>\
-<div class="cesium-animation-themeSwoosh"></div>\
-<div class="cesium-animation-themeSwooshHover"></div>';
+<div class="cesium-animation-themePointer"></div>';
 
         this._theme = themeEle;
         this._themeNormal = themeEle.childNodes[0];
@@ -375,8 +359,6 @@ define([
         this._themeDisabled = themeEle.childNodes[3];
         this._themeKnob = themeEle.childNodes[4];
         this._themePointer = themeEle.childNodes[5];
-        this._themeSwoosh = themeEle.childNodes[6];
-        this._themeSwooshHover = themeEle.childNodes[7];
 
         var svg = document.createElementNS(svgNS, 'svg:svg');
         this._svgNode = svg;
@@ -387,7 +369,7 @@ define([
         var topG = document.createElementNS(svgNS, 'g');
         this._topG = topG;
 
-        this._realtimeSVG = new SvgButton(wingButton(3, 4, '#animation_pathClock'), viewModel.playRealtimeViewModel);
+        this._realtimeSVG = new SvgButton(wingButton(8, 8, '#animation_pathClock'), viewModel.playRealtimeViewModel);
         this._playReverseSVG = new SvgButton(rectButton(44, 99, '#animation_pathPlayReverse'), viewModel.playReverseViewModel);
         this._playForwardSVG = new SvgButton(rectButton(124, 99, '#animation_pathPlay'), viewModel.playForwardViewModel);
         this._pauseSVG = new SvgButton(rectButton(84, 99, '#animation_pathPause'), viewModel.pauseViewModel);
@@ -399,39 +381,19 @@ define([
         buttonsG.appendChild(this._pauseSVG.svgElement);
 
         var shuttleRingBackPanel = svgFromObject({
-            tagName : 'circle',
+            tagName : 'path',
             'class' : 'cesium-animation-shuttleRingBack',
-            cx : 100,
-            cy : 100,
-            r : 99
+            transform : 'translate(31,141)',
+            d : 'M0,0 a80,80 0 1,1 138.564,0'
         });
         this._shuttleRingBackPanel = shuttleRingBackPanel;
 
-        var shuttleRingSwooshG = svgFromObject({
-            tagName : 'g',
-            'class' : 'cesium-animation-shuttleRingSwoosh',
-            children : [{
-                tagName : 'use',
-                transform : 'translate(100,97) scale(-1,1)',
-                'xlink:href' : '#animation_pathSwooshFX'
-            }, {
-                tagName : 'use',
-                transform : 'translate(100,97)',
-                'xlink:href' : '#animation_pathSwooshFX'
-            }, {
-                tagName : 'line',
-                x1 : 100,
-                y1 : 8,
-                x2 : 100,
-                y2 : 22
-            }]
-        });
-        this._shuttleRingSwooshG = shuttleRingSwooshG;
-
         this._shuttleRingPointer = svgFromObject({
-            tagName : 'use',
+            tagName : 'circle',
             'class' : 'cesium-animation-shuttleRingPointer',
-            'xlink:href' : '#animation_pathPointer'
+            cx : 0,
+            cy : -80,
+            r : 10
         });
 
         var knobG = svgFromObject({
@@ -444,10 +406,10 @@ define([
             'class' : 'cesium-animation-knobOuter',
             cx : 0,
             cy : 0,
-            r : 71
+            r : 63
         });
 
-        var knobInnerAndShieldSize = 61;
+        var knobInnerAndShieldSize = 63;
 
         var knobInner = svgFromObject({
             tagName : 'circle',
@@ -479,7 +441,6 @@ define([
         topG.appendChild(buttonsG);
 
         shuttleRingBackG.appendChild(shuttleRingBackPanel);
-        shuttleRingBackG.appendChild(shuttleRingSwooshG);
         shuttleRingBackG.appendChild(this._shuttleRingPointer);
 
         knobG.appendChild(this._knobOuter);
@@ -500,8 +461,6 @@ define([
 
         shuttleRingBackPanel.addEventListener('mousedown', mouseCallback, true);
         shuttleRingBackPanel.addEventListener('touchstart', mouseCallback, true);
-        shuttleRingSwooshG.addEventListener('mousedown', mouseCallback, true);
-        shuttleRingSwooshG.addEventListener('touchstart', mouseCallback, true);
         document.addEventListener('mousemove', mouseCallback, true);
         document.addEventListener('touchmove', mouseCallback, true);
         document.addEventListener('mouseup', mouseCallback, true);
@@ -601,8 +560,6 @@ define([
         var mouseCallback = this._mouseCallback;
         this._shuttleRingBackPanel.removeEventListener('mousedown', mouseCallback, true);
         this._shuttleRingBackPanel.removeEventListener('touchstart', mouseCallback, true);
-        this._shuttleRingSwooshG.removeEventListener('mousedown', mouseCallback, true);
-        this._shuttleRingSwooshG.removeEventListener('touchstart', mouseCallback, true);
         document.removeEventListener('mousemove', mouseCallback, true);
         document.removeEventListener('touchmove', mouseCallback, true);
         document.removeEventListener('mouseup', mouseCallback, true);
@@ -662,10 +619,10 @@ define([
         var scaleX = width / baseWidth;
         var scaleY = height / baseHeight;
 
-        svg.style.cssText = 'width: ' + width + 'px; height: ' + height + 'px; position: absolute; bottom: 0; left: 0;';
+        svg.style.cssText = 'width: ' + width + 'px; height: ' + (height+28) + 'px; position: absolute; bottom: 0; left: 0;';
         svg.setAttribute('width', width);
-        svg.setAttribute('height', height);
-        svg.setAttribute('viewBox', '0 0 ' + width + ' ' + height);
+        svg.setAttribute('height', height+28);
+        svg.setAttribute('viewBox', '0 0 ' + width + ' ' + (height+28));
 
         this._topG.setAttribute('transform', 'scale(' + scaleX + ',' + scaleY + ')');
 
@@ -738,10 +695,6 @@ define([
                 id : 'animation_pathPointer',
                 tagName : 'path',
                 d : 'M-15,-65,-15,-55,15,-55,15,-65,0,-95z'
-            }, {
-                id : 'animation_pathSwooshFX',
-                tagName : 'path',
-                d : 'm 85,0 c 0,16.617 -4.813944,35.356 -13.131081,48.4508 h 6.099803 c 8.317138,-13.0948 13.13322,-28.5955 13.13322,-45.2124 0,-46.94483 -38.402714,-85.00262 -85.7743869,-85.00262 -1.0218522,0 -2.0373001,0.0241 -3.0506131,0.0589 45.958443,1.59437 82.723058,35.77285 82.723058,81.70532 z'
             }]
         });
 
