@@ -62,9 +62,8 @@ define([
         return text;
     }
 
-    function setShuttleRingPointer(shuttleRingPointer, knobOuter, angle) {
+    function setShuttleRingPointer(shuttleRingPointer, angle) {
         shuttleRingPointer.setAttribute('transform', 'translate(100,100) rotate(' + angle + ')');
-        knobOuter.setAttribute('transform', 'rotate(' + angle + ')');
     }
 
     function rectButton(x, y, path) {
@@ -338,8 +337,8 @@ define([
         cssStyle.textContent = '.cesium-animation-rectButton .cesium-animation-buttonGlow { filter: url(#animation_blurred); }\
 .cesium-animation-rectButton .cesium-animation-buttonMain .cesium-animation-buttonToggled .cesium-animation-buttonMain \
 .cesium-animation-rectButton:hover .cesium-animation-buttonMain .cesium-animation-buttonDisabled .cesium-animation-buttonMain \
-.cesium-animation-shuttleRingG .cesium-animation-shuttleRingG:hover \
-.cesium-animation-shuttleRingPointer .cesium-animation-shuttleRingPausePointer .cesium-animation-knobOuter .cesium-animation-knobInner';
+.cesium-animation-shuttleRingG .cesium-animation-shuttleRingG:hover .cesium-animation-shuttleRingPointer \
+.cesium-animation-shuttleRingPausePointer .cesium-animation-knobInner';
 
         document.head.insertBefore(cssStyle, document.head.childNodes[0]);
 
@@ -401,14 +400,6 @@ define([
             transform : 'translate(100,100)'
         });
 
-        this._knobOuter = svgFromObject({
-            tagName : 'circle',
-            'class' : 'cesium-animation-knobOuter',
-            cx : 0,
-            cy : 0,
-            r : 63
-        });
-
         var knobInnerAndShieldSize = 63;
 
         var knobInner = svgFromObject({
@@ -443,7 +434,6 @@ define([
         shuttleRingBackG.appendChild(shuttleRingBackPanel);
         shuttleRingBackG.appendChild(this._shuttleRingPointer);
 
-        knobG.appendChild(this._knobOuter);
         knobG.appendChild(knobInner);
         knobG.appendChild(this._knobDate);
         knobG.appendChild(this._knobTime);
@@ -467,8 +457,6 @@ define([
         document.addEventListener('touchend', mouseCallback, true);
         this._shuttleRingPointer.addEventListener('mousedown', mouseCallback, true);
         this._shuttleRingPointer.addEventListener('touchstart', mouseCallback, true);
-        this._knobOuter.addEventListener('mousedown', mouseCallback, true);
-        this._knobOuter.addEventListener('touchstart', mouseCallback, true);
 
         //TODO: Since the animation widget uses SVG and has no HTML backing,
         //we need to wire everything up manually.  Knockout can supposedly
@@ -492,7 +480,7 @@ define([
         }),
 
         subscribeAndEvaluate(viewModel, 'shuttleRingAngle', function(value) {
-            setShuttleRingPointer(that._shuttleRingPointer, that._knobOuter, value);
+            setShuttleRingPointer(that._shuttleRingPointer, value);
         }),
 
         subscribeAndEvaluate(viewModel, 'dateLabel', function(value) {
@@ -566,8 +554,6 @@ define([
         document.removeEventListener('touchend', mouseCallback, true);
         this._shuttleRingPointer.removeEventListener('mousedown', mouseCallback, true);
         this._shuttleRingPointer.removeEventListener('touchstart', mouseCallback, true);
-        this._knobOuter.removeEventListener('mousedown', mouseCallback, true);
-        this._knobOuter.removeEventListener('touchstart', mouseCallback, true);
 
         this._container.removeChild(this._svgNode);
         this._container.removeChild(this._theme);

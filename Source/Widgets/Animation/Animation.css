@@ -122,12 +122,12 @@
 }
 
 .cesium-animation-shuttleRingPointer {
-    fill: #3030c6;
+    fill: #4E78A0;
     cursor: pointer;
 }
 
 .cesium-animation-shuttleRingPausePointer {
-    fill: #5050d6;
+    fill: #4E78A0;
     cursor: pointer;
 }
 
@@ -139,16 +139,8 @@
     stroke-opacity: 0.75;
 }
 
-.cesium-animation-knobOuter {
-    fill: #434343;
-    fill-opacity: 0.5;
-    cursor: pointer;
-    stroke: #444;
-    stroke-width: 1.2;
-}
-
 .cesium-animation-knobInner {
     fill: #434343;
-    fill-opacity: 0.5;
+    fill-opacity: 0.75;
     cursor: pointer;
 }
