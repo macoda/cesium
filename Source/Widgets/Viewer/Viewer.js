@@ -12,6 +12,8 @@ define([
         '../../DynamicScene/DataSourceDisplay',
         '../Animation/Animation',
         '../Animation/AnimationViewModel',
+        '../Navigation/Navigation',
+        '../Navigation/NavigationViewModel',
         '../BaseLayerPicker/BaseLayerPicker',
         '../BaseLayerPicker/createDefaultBaseLayers',
         '../CesiumWidget/CesiumWidget',
@@ -35,6 +37,8 @@ define([
         DataSourceDisplay,
         Animation,
         AnimationViewModel,
+        Navigation,
+        NavigationViewModel,
         BaseLayerPicker,
         createDefaultBaseLayers,
         CesiumWidget,
@@ -250,6 +254,15 @@ Either specify options.imageryProvider instead or set options.baseLayerPicker to
             animation = new Animation(animationContainer, new AnimationViewModel(this._clockViewModel));
         }
 
+        //Navigation
+        var navigation;
+        if (typeof options.navigation === 'undefined' || options.navigation !== false) {
+            var navigationContainer = document.createElement('div');
+            navigationContainer.className = 'cesium-viewer-navigationContainer';
+            viewerContainer.appendChild(navigationContainer);
+            navigation = new Navigation(navigationContainer, new NavigationViewModel(this._clockViewModel));
+        }
+
         //Timeline
         var timeline;
         if (typeof options.timeline === 'undefined' || options.timeline !== false) {
@@ -296,6 +309,7 @@ Either specify options.imageryProvider instead or set options.baseLayerPicker to
         this._sceneModePicker = sceneModePicker;
         this._baseLayerPicker = baseLayerPicker;
         this._animation = animation;
+        this._navigation = navigation;
         this._timeline = timeline;
         this._fullscreenButton = fullscreenButton;
         this._lastWidth = 0;
