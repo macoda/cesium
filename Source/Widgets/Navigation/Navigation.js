@@ -45,7 +45,7 @@ define([
         var text = document.createElementNS(svgNS, 'text');
         text.setAttribute('x', x);
         text.setAttribute('y', y);
-        text.setAttribute('class', 'cesium-animation-svgText');
+        text.setAttribute('class', 'cesium-navigation-svgText');
 
         var tspan = document.createElementNS(svgNS, 'tspan');
         tspan.textContent = msg;
@@ -73,6 +73,16 @@ define([
         return svgFromObject(button);
     }
 
+    function setPointerFromMouse(widget, e) {
+        if (e.type === 'mousedown') {
+            widget._dragging = true;
+        } else if (widget._dragging && e.type === 'mousemove') {
+            console.log("Dragged!");
+        } else {
+            widget._dragging = false;
+        }
+    }
+
     var Navigation = function(container, viewModel) {
         if (typeof container === 'undefined') {
             throw new DeveloperError('container is required.');
@@ -89,6 +99,7 @@ define([
 
         this._centerX = 0;
         this._centerY = 0;
+        this._dragging = false;
 
         var svg = document.createElementNS(svgNS, 'svg:svg');
         this._svgNode = svg;
@@ -212,6 +223,19 @@ define([
 
         svg.appendChild(topG);
         container.appendChild(svg);
+
+        var that = this;
+        var mouseCallback = function(e) {
+            setPointerFromMouse(that, e);
+        };
+        this._mouseCallback = mouseCallback;
+
+        document.addEventListener('mousemove', mouseCallback, true);
+        document.addEventListener('mouseup', mouseCallback, true);
+        this._knobOuterN.addEventListener('mousedown', mouseCallback, true);
+        this._panJoystick.addEventListener('mousedown', mouseCallback, true);
+        this._zoomRingPointer.addEventListener('mousedown', mouseCallback, true);
+        this._tiltRingPointer.addEventListener('mousedown', mouseCallback, true);
 
         var defsElement = svgFromObject({
            tagName : 'defs',
