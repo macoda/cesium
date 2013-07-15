@@ -1,9 +1,10 @@
-.cesium-animation-svgText {
+.cesium-navigation-svgText {
     fill: #edffff;
     font-family: Sans-Serif;
     font-size: 18px;
     font-weight: bold;
     text-anchor: middle;
+    cursor: pointer;
 }
 
 .cesium-navigation-blank {
@@ -33,7 +34,7 @@
 
 .cesium-navigation-zoomRingPointer {
     cursor: pointer;
-    fill: #4343c9;
+    fill: #4E78A0;
 }
 
 .cesium-navigation-zoomRing {
@@ -43,23 +44,13 @@
     stroke-width: 20;
 }
 
-.cesium-navigation-zoomPlus {
-    fill: #DDDDDD;
-    stroke: #DDDDDD;
-}
-
-.cesium-navigation-zoomMinus {
-    fill: #DDDDDD;
-    stroke: #DDDDDD;
-}
-
 .cesium-navigation-tiltRingG {
     cursor: pointer;
 }
 
 .cesium-navigation-tiltRingPointer {
     cursor: pointer;
-    fill: #4343c9;
+    fill: #4E78A0;
 }
 
 .cesium-navigation-tiltRing {
@@ -70,16 +61,14 @@
 }
 
 .cesium-navigation-knobOuter {
-    cursor: pointer;
-    fill: #121212;
+    fill: #434343;
 }
 
 .cesium-navigation-knobInner {
-    cursor: pointer;
-    fill: #434343;
+    fill: #999999;
 }
 
 .cesium-navigation-panJoystick {
     cursor: pointer;
-    fill: #4343c9;
+    fill: #4E78A0;
 }
