@@ -18,6 +18,13 @@ define([
     var svgNS = "http://www.w3.org/2000/svg";
     var xlinkNS = "http://www.w3.org/1999/xlink";
 
+    var widgetForZoomDrag;
+
+    function subscribeAndEvaluate(owner, observablePropertyName, callback, target) {
+        callback.call(target, owner[observablePropertyName]);
+        return knockout.getObservable(owner, observablePropertyName).subscribe(callback, target);
+    }
+
     //Dynamically builds an SVG element from a JSON object.
     function svgFromObject(obj) {
         var ele = document.createElementNS(svgNS, obj.tagName);
@@ -53,6 +60,10 @@ define([
         return text;
     }
 
+    function setZoomRingPointer(zoomRingPointer, angle) {
+        zoomRingPointer.setAttribute('transform', 'translate(100, 100) rotate(' + angle + ')');
+    }
+
     function circularButton(x, y, path) {
         var button = {
             tagName : 'g',
@@ -74,12 +85,62 @@ define([
     }
 
     function setPointerFromMouse(widget, e) {
-        if (e.type === 'mousedown') {
-            widget._dragging = true;
-        } else if (widget._dragging && e.type === 'mousemove') {
-            console.log("Dragged!");
+        var viewModel = widget._viewModel;
+        var zoomRingDragging = viewModel.zoomRingDragging;
+
+        if (zoomRingDragging && (widgetForZoomDrag !== widget)) {
+            return;
+        }
+
+        if (e.type === 'mousedown' || (zoomRingDragging && e.type === 'mousemove') ||
+                (e.type === 'touchstart' && e.touches.length === 1) ||
+                (zoomRingDragging && e.type === 'touchmove' && e.touches.length === 1)) {
+            var centerX = widget._centerX;
+            var centerY = widget._centerY;
+            var svg = widget._svgNode;
+            var rect = svg.getBoundingClientRect();
+            var clientX;
+            var clientY;
+            if (e.type === 'touchstart' || e.type === 'touchmove') {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+
+            if (!zoomRingDragging &&
+                (clientX > rect.right ||
+                 clientX < rect.left ||
+                 clientY < rect.top ||
+                 clientY > rect.bottom)) {
+                return;
+            }
+
+            var pointerRect = widget._zoomRingPointer.getBoundingClientRect();
+
+            var x = clientX - centerX - rect.left;
+            var y = clientY - centerY - rect.top;
+
+            var angle = Math.atan2(y, x) * 180 / Math.PI + 90;
+            if (angle > 180) {
+                angle -= 360;
+            }
+
+            var zoomRingAngle = viewModel.zoomRingAngle;
+            if (zoomRingDragging || (clientX < pointerRect.right && clientX > pointerRect.left && clientY > pointerRect.top && clientY < pointerRect.bottom)) {
+                widgetForZoomDrag = widget;
+                viewModel.zoomRingDragging = true;
+                viewModel.zoomRingAngle = angle;
+            } else if (angle < zoomRingAngle) {
+                viewModel.zoomIn();
+            } else if (angle > zoomRingAngle) {
+                viewModel.zoomOut();
+            }
+            e.preventDefault();
         } else {
-            widget._dragging = false;
+            widgetForZoomDrag = undefined;
+            viewModel.zoomRingDragging = false;
         }
     }
 
@@ -236,6 +297,11 @@ define([
         this._panJoystick.addEventListener('mousedown', mouseCallback, true);
         this._zoomRingPointer.addEventListener('mousedown', mouseCallback, true);
         this._tiltRingPointer.addEventListener('mousedown', mouseCallback, true);
+        this._subscriptions = [
+        subscribeAndEvaluate(viewModel, 'zoomRingAngle', function(value) {
+            setZoomRingPointer(that._zoomRingPointer, value);
+        })];
+
 
         var defsElement = svgFromObject({
            tagName : 'defs',
