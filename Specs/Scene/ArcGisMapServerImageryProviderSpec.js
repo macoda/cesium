@@ -1,6 +1,7 @@
 /*global defineSuite*/
 defineSuite([
          'Scene/ArcGisMapServerImageryProvider',
+         'Core/defined',
          'Core/jsonp',
          'Core/loadImage',
          'Core/loadWithXhr',
@@ -15,6 +16,7 @@ defineSuite([
          'ThirdParty/when'
      ], function(
          ArcGisMapServerImageryProvider,
+         defined,
          jsonp,
          loadImage,
          loadWithXhr,
@@ -93,7 +95,7 @@ defineSuite([
             expect(provider.getTileHeight()).toEqual(256);
             expect(provider.getMaximumLevel()).toEqual(2);
             expect(provider.getTilingScheme()).toBeInstanceOf(WebMercatorTilingScheme);
-            expect(provider.getLogo()).toBeDefined();
+            expect(provider.getCredit()).toBeDefined();
             expect(provider.getTileDiscardPolicy()).toBeInstanceOf(DiscardMissingTileImagePolicy);
             expect(provider.getExtent()).toEqual(new WebMercatorTilingScheme().getExtent());
             expect(provider.isUsingPrecachedTiles()).toEqual(true);
@@ -120,7 +122,7 @@ defineSuite([
         });
 
         waitsFor(function() {
-            return typeof tile000Image !== 'undefined';
+            return defined(tile000Image);
         }, 'requested tile to be loaded');
 
         runs(function() {
@@ -174,7 +176,7 @@ defineSuite([
             expect(provider.getTileHeight()).toEqual(256);
             expect(provider.getMaximumLevel()).toEqual(2);
             expect(provider.getTilingScheme()).toBeInstanceOf(GeographicTilingScheme);
-            expect(provider.getLogo()).toBeDefined();
+            expect(provider.getCredit()).toBeDefined();
             expect(provider.getTileDiscardPolicy()).toBeInstanceOf(DiscardMissingTileImagePolicy);
             expect(provider.getExtent()).toEqual(new GeographicTilingScheme().getExtent());
             expect(provider.isUsingPrecachedTiles()).toEqual(true);
@@ -201,7 +203,7 @@ defineSuite([
         });
 
         waitsFor(function() {
-            return typeof tile000Image !== 'undefined';
+            return defined(tile000Image);
         }, 'requested tile to be loaded');
 
         runs(function() {
@@ -239,7 +241,7 @@ defineSuite([
             expect(provider.getTileHeight()).toEqual(256);
             expect(provider.getMaximumLevel()).toBeUndefined();
             expect(provider.getTilingScheme()).toBeInstanceOf(GeographicTilingScheme);
-            expect(provider.getLogo()).toBeDefined();
+            expect(provider.getCredit()).toBeDefined();
             expect(provider.getTileDiscardPolicy()).toBeUndefined();
             expect(provider.getExtent()).toEqual(new GeographicTilingScheme().getExtent());
             expect(provider.isUsingPrecachedTiles()).toEqual(false);
@@ -263,7 +265,7 @@ defineSuite([
         });
 
         waitsFor(function() {
-            return typeof tile000Image !== 'undefined';
+            return defined(tile000Image);
         }, 'requested tile to be loaded');
 
         runs(function() {
@@ -323,7 +325,7 @@ defineSuite([
             expect(provider.getTileHeight()).toEqual(256);
             expect(provider.getMaximumLevel()).toEqual(2);
             expect(provider.getTilingScheme()).toBeInstanceOf(GeographicTilingScheme);
-            expect(provider.getLogo()).toBeDefined();
+            expect(provider.getCredit()).toBeDefined();
             expect(provider.getTileDiscardPolicy()).toBeInstanceOf(DiscardMissingTileImagePolicy);
             expect(provider.getExtent()).toEqual(new GeographicTilingScheme().getExtent());
             expect(provider.getProxy()).toEqual(proxy);
@@ -351,7 +353,7 @@ defineSuite([
         });
 
         waitsFor(function() {
-            return typeof tile000Image !== 'undefined';
+            return defined(tile000Image);
         }, 'requested tile to be loaded');
 
         runs(function() {

@@ -4,10 +4,13 @@ define([
         '../Core/combine',
         '../Core/destroyObject',
         '../Core/defaultValue',
+        '../Core/defined',
         '../Core/DeveloperError',
         '../Core/BoundingRectangle',
         '../Core/ComponentDatatype',
         '../Core/PrimitiveType',
+        '../Core/Geometry',
+        '../Core/GeometryAttribute',
         './Material',
         '../Renderer/BufferUsage',
         '../Renderer/BlendingState',
@@ -20,10 +23,13 @@ define([
         combine,
         destroyObject,
         defaultValue,
+        defined,
         DeveloperError,
         BoundingRectangle,
         ComponentDatatype,
         PrimitiveType,
+        Geometry,
+        GeometryAttribute,
         Material,
         BufferUsage,
         BlendingState,
@@ -51,21 +57,19 @@ define([
         this._va = undefined;
         this._overlayCommand = new DrawCommand();
         this._overlayCommand.primitiveType = PrimitiveType.TRIANGLE_FAN;
+        this._overlayCommand.owner = this;
         this._commandLists = new CommandLists();
         this._commandLists.overlayList.push(this._overlayCommand);
 
         /**
          * Determines if the viewport quad primitive will be shown.
-         * <p>
-         * The default is <code>true</code>.
-         * </p>
          *
          * @type {Boolean}
          * @default true
-        */
+         */
         this.show = true;
 
-        if (typeof rectangle === 'undefined') {
+        if (!defined(rectangle)) {
             rectangle = new BoundingRectangle();
         }
 
@@ -79,7 +83,7 @@ define([
          */
         this.rectangle = BoundingRectangle.clone(rectangle);
 
-        if (typeof material === 'undefined') {
+        if (!defined(material)) {
             material = Material.fromType(undefined, Material.ColorType);
             material.uniforms.color = new Color(1.0, 1.0, 1.0, 1.0);
         }
@@ -115,13 +119,13 @@ define([
         // Per-context cache for viewport quads
         var vertexArray = context.cache.viewportQuad_vertexArray;
 
-        if (typeof vertexArray !== 'undefined') {
+        if (defined(vertexArray)) {
             return vertexArray;
         }
 
-        var mesh = {
+        var geometry = new Geometry({
             attributes : {
-                position : {
+                position : new GeometryAttribute({
                     componentDatatype : ComponentDatatype.FLOAT,
                     componentsPerAttribute : 2,
                     values : [
@@ -130,9 +134,9 @@ define([
                         1.0,  1.0,
                        -1.0,  1.0
                     ]
-                },
+                }),
 
-                textureCoordinates : {
+                textureCoordinates : new GeometryAttribute({
                     componentDatatype : ComponentDatatype.FLOAT,
                     componentsPerAttribute : 2,
                     values : [
@@ -141,12 +145,13 @@ define([
                         1.0, 1.0,
                         0.0, 1.0
                     ]
-                }
-            }
-        };
+                })
+            },
+            primitiveType : PrimitiveType.TRIANGLES
+        });
 
-        vertexArray = context.createVertexArrayFromMesh({
-            mesh : mesh,
+        vertexArray = context.createVertexArrayFromGeometry({
+            geometry : geometry,
             attributeIndices : attributeIndices,
             bufferUsage : BufferUsage.STATIC_DRAW
         });
@@ -169,21 +174,21 @@ define([
             return;
         }
 
-        if (typeof this.material === 'undefined') {
+        if (!defined(this.material)) {
             throw new DeveloperError('this.material must be defined.');
         }
 
-        if (typeof this.rectangle === 'undefined') {
+        if (!defined(this.rectangle)) {
             throw new DeveloperError('this.rectangle must be defined.');
         }
 
-        if (typeof this._va === 'undefined') {
+        if (!defined(this._va)) {
             this._va = getVertexArray(context);
             this._overlayCommand.vertexArray = this._va;
         }
 
         var rs = this._overlayCommand.renderState;
-        if ((typeof rs === 'undefined') || !BoundingRectangle.equals(rs.viewport, this.rectangle)) {
+        if ((!defined(rs)) || !BoundingRectangle.equals(rs.viewport, this.rectangle)) {
             this._overlayCommand.renderState = context.createRenderState({
                 blending : BlendingState.ALPHA_BLEND,
                 viewport : this.rectangle

@@ -1,9 +1,10 @@
 /*global define*/
 define([
         '../Core/defaultValue',
-        '../Core/CubeMapEllipsoidTessellator',
+        '../Core/defined',
+        '../Core/EllipsoidGeometry',
         '../Core/destroyObject',
-        '../Core/MeshFilters',
+        '../Core/GeometryPipeline',
         '../Core/PrimitiveType',
         '../Core/Ellipsoid',
         '../Renderer/BufferUsage',
@@ -15,9 +16,10 @@ define([
         '../Shaders/SkyAtmosphereFS'
     ], function(
         defaultValue,
-        CubeMapEllipsoidTessellator,
+        defined,
+        EllipsoidGeometry,
         destroyObject,
-        MeshFilters,
+        GeometryPipeline,
         PrimitiveType,
         Ellipsoid,
         BufferUsage,
@@ -52,9 +54,6 @@ define([
 
         /**
          * Determines if the atmosphere is shown.
-         * <p>
-         * The default is <code>true</code>.
-         * </p>
          *
          * @type {Boolean}
          * @default true
@@ -63,6 +62,7 @@ define([
 
         this._ellipsoid = ellipsoid;
         this._command = new DrawCommand();
+        this._command.owner = this;
         this._spSkyFromSpace = undefined;
         this._spSkyFromAtmosphere = undefined;
 
@@ -133,11 +133,15 @@ define([
 
         var command = this._command;
 
-        if (typeof command.vertexArray === 'undefined') {
-            var mesh = CubeMapEllipsoidTessellator.compute(Ellipsoid.fromCartesian3(this._ellipsoid.getRadii().multiplyByScalar(1.025)), 60);
-            command.vertexArray = context.createVertexArrayFromMesh({
-                mesh : mesh,
-                attributeIndices : MeshFilters.createAttributeIndices(mesh),
+        if (!defined(command.vertexArray)) {
+            var geometry = new EllipsoidGeometry({
+                radii : this._ellipsoid.getRadii().multiplyByScalar(1.025),
+                slicePartitions : 256,
+                stackPartitions : 256
+            });
+            command.vertexArray = context.createVertexArrayFromGeometry({
+                geometry : geometry,
+                attributeIndices : GeometryPipeline.createAttributeIndices(geometry),
                 bufferUsage : BufferUsage.STATIC_DRAW
             });
             command.primitiveType = PrimitiveType.TRIANGLES;

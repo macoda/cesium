@@ -2,6 +2,7 @@
 defineSuite([
          'Scene/OpenStreetMapImageryProvider',
          'Core/jsonp',
+         'Core/defined',
          'Core/loadImage',
          'Core/DefaultProxy',
          'Core/Extent',
@@ -14,6 +15,7 @@ defineSuite([
      ], function(
          OpenStreetMapImageryProvider,
          jsonp,
+         defined,
          loadImage,
          DefaultProxy,
          Extent,
@@ -123,7 +125,7 @@ defineSuite([
         });
 
         waitsFor(function() {
-            return typeof tile000Image !== 'undefined';
+            return defined(tile000Image);
         }, 'requested tile to be loaded');
 
         runs(function() {
@@ -135,7 +137,7 @@ defineSuite([
         var provider = new OpenStreetMapImageryProvider({
             url : 'made/up/osm/server'
         });
-        expect(provider.getLogo()).toBeDefined();
+        expect(provider.getCredit()).toBeDefined();
     });
 
     it('turns the supplied credit into a logo', function() {
@@ -143,7 +145,7 @@ defineSuite([
             url : 'made/up/osm/server',
             credit : 'Thanks to our awesome made up source of this imagery!'
         });
-        expect(providerWithCredit.getLogo()).toBeDefined();
+        expect(providerWithCredit.getCredit()).toBeDefined();
     });
 
     it('routes requests through a proxy if one is specified', function() {
@@ -174,7 +176,7 @@ defineSuite([
         });
 
         waitsFor(function() {
-            return typeof tile000Image !== 'undefined';
+            return defined(tile000Image);
         }, 'requested tile to be loaded');
 
         runs(function() {

@@ -2,6 +2,7 @@
 define([
         './freezeObject',
         './defaultValue',
+        './defined',
         './Ellipsoid',
         './Cartographic',
         './DeveloperError',
@@ -9,6 +10,7 @@ define([
     ], function(
         freezeObject,
         defaultValue,
+        defined,
         Ellipsoid,
         Cartographic,
         DeveloperError,
@@ -17,42 +19,81 @@ define([
 
     /**
      * A two dimensional region specified as longitude and latitude coordinates.
+     *
      * @alias Extent
      * @constructor
      *
-     * @param {Number} [west=0.0] The westernmost longitude in the range [-Pi, Pi].
-     * @param {Number} [south=0.0] The southernmost latitude in the range [-Pi/2, Pi/2].
-     * @param {Number} [east=0.0] The easternmost longitude in the range [-Pi, Pi].
-     * @param {Number} [north=0.0] The northernmost latitude in the range [-Pi/2, Pi/2].
+     * @param {Number} [west=0.0] The westernmost longitude, in radians, in the range [-Pi, Pi].
+     * @param {Number} [south=0.0] The southernmost latitude, in radians, in the range [-Pi/2, Pi/2].
+     * @param {Number} [east=0.0] The easternmost longitude, in radians, in the range [-Pi, Pi].
+     * @param {Number} [north=0.0] The northernmost latitude, in radians, in the range [-Pi/2, Pi/2].
      */
     var Extent = function(west, south, east, north) {
         /**
-         * The westernmost longitude in the range [-Pi, Pi].
+         * The westernmost longitude in radians in the range [-Pi, Pi].
+         *
          * @type {Number}
          * @default 0.0
          */
         this.west = defaultValue(west, 0.0);
 
         /**
-         * The southernmost latitude in the range [-Pi/2, Pi/2].
+         * The southernmost latitude in radians in the range [-Pi/2, Pi/2].
+         *
          * @type {Number}
          * @default 0.0
          */
         this.south = defaultValue(south, 0.0);
 
         /**
-         * The easternmost longitude in the range [-Pi, Pi].
+         * The easternmost longitude in radians in the range [-Pi, Pi].
+         *
          * @type {Number}
          * @default 0.0
          */
         this.east = defaultValue(east, 0.0);
 
         /**
-         * The northernmost latitude in the range [-Pi/2, Pi/2].
+         * The northernmost latitude in radians in the range [-Pi/2, Pi/2].
+         *
          * @type {Number}
          * @default 0.0
          */
         this.north = defaultValue(north, 0.0);
+    };
+
+    /**
+     * Creates an extent given the boundary longitude and latitude in degrees.
+     *
+     * @memberof Extent
+     *
+     * @param {Number} [west=0.0] The westernmost longitude in degrees in the range [-180.0, 180.0].
+     * @param {Number} [south=0.0] The southernmost latitude in degrees in the range [-90.0, 90.0].
+     * @param {Number} [east=0.0] The easternmost longitude in degrees in the range [-180.0, 180.0].
+     * @param {Number} [north=0.0] The northernmost latitude in degrees in the range [-90.0, 90.0].
+     * @param {Extent} [result] The object onto which to store the result, or undefined if a new instance should be created.
+     *
+     * @return {Extent} The modified result parameter or a new Extent instance if none was provided.
+     *
+     * @example
+     * var extent = Extent.fromDegrees(0.0, 20.0, 10.0, 30.0);
+     */
+    Extent.fromDegrees = function(west, south, east, north, result) {
+        west = CesiumMath.toRadians(defaultValue(west, 0.0));
+        south = CesiumMath.toRadians(defaultValue(south, 0.0));
+        east = CesiumMath.toRadians(defaultValue(east, 0.0));
+        north = CesiumMath.toRadians(defaultValue(north, 0.0));
+
+        if (!defined(result)) {
+            return new Extent(west, south, east, north);
+        }
+
+        result.west = west;
+        result.south = south;
+        result.east = east;
+        result.north = north;
+
+        return result;
     };
 
     /**
@@ -64,7 +105,7 @@ define([
      * @return {Extent} The modified result parameter or a new Extent instance if none was provided.
      */
     Extent.fromCartographicArray = function(cartographics, result) {
-        if (typeof cartographics === 'undefined') {
+        if (!defined(cartographics)) {
             throw new DeveloperError('cartographics is required.');
         }
 
@@ -81,7 +122,7 @@ define([
             maxLat = Math.max(maxLat, position.latitude);
         }
 
-        if (typeof result === 'undefined') {
+        if (!defined(result)) {
             return new Extent(minLon, minLat, maxLon, maxLat);
         }
 
@@ -102,12 +143,14 @@ define([
      * @return {Extent} The modified result parameter or a new Extent instance if none was provided. (Returns undefined if extent is undefined)
      */
     Extent.clone = function(extent, result) {
-        if (typeof extent === 'undefined') {
+        if (!defined(extent)) {
             return undefined;
         }
-        if (typeof result === 'undefined') {
+
+        if (!defined(result)) {
             return new Extent(extent.west, extent.south, extent.east, extent.north);
         }
+
         result.west = extent.west;
         result.south = extent.south;
         result.east = extent.east;
@@ -136,11 +179,28 @@ define([
      * @return {Boolean} <code>true</code> if the Extents are equal, <code>false</code> otherwise.
      */
     Extent.prototype.equals = function(other) {
-        return typeof other !== 'undefined' &&
-               this.west === other.west &&
-               this.south === other.south &&
-               this.east === other.east &&
-               this.north === other.north;
+        return Extent.equals(this, other);
+    };
+
+    /**
+     * Compares the provided extents and returns <code>true</code> if they are equal,
+     * <code>false</code> otherwise.
+     *
+     * @memberof Extent
+     *
+     * @param {Extent} [left] The first Extent.
+     * @param {Extent} [right] The second Extent.
+     *
+     * @return {Boolean} <code>true</code> if left and right are equal; otherwise <code>false</code>.
+     */
+    Extent.equals = function(left, right) {
+        return (left === right) ||
+               ((defined(left)) &&
+                (defined(right)) &&
+                (left.west === right.west) &&
+                (left.south === right.south) &&
+                (left.east === right.east) &&
+                (left.north === right.north));
     };
 
     /**
@@ -160,7 +220,7 @@ define([
             throw new DeveloperError('epsilon is required and must be a number.');
         }
 
-        return typeof other !== 'undefined' &&
+        return defined(other) &&
                (Math.abs(this.west - other.west) <= epsilon) &&
                (Math.abs(this.south - other.south) <= epsilon) &&
                (Math.abs(this.east - other.east) <= epsilon) &&
@@ -225,7 +285,7 @@ define([
      * @return {Cartographic} The modified result parameter or a new Cartographic instance if none was provided.
      */
     Extent.prototype.getSouthwest = function(result) {
-        if (typeof result === 'undefined') {
+        if (!defined(result)) {
             return new Cartographic(this.west, this.south);
         }
         result.longitude = this.west;
@@ -242,7 +302,7 @@ define([
      * @return {Cartographic} The modified result parameter or a new Cartographic instance if none was provided.
      */
     Extent.prototype.getNorthwest = function(result) {
-        if (typeof result === 'undefined') {
+        if (!defined(result)) {
             return new Cartographic(this.west, this.north);
         }
         result.longitude = this.west;
@@ -259,7 +319,7 @@ define([
      * @return {Cartographic} The modified result parameter or a new Cartographic instance if none was provided.
      */
     Extent.prototype.getNortheast = function(result) {
-        if (typeof result === 'undefined') {
+        if (!defined(result)) {
             return new Cartographic(this.east, this.north);
         }
         result.longitude = this.east;
@@ -276,7 +336,7 @@ define([
      * @return {Cartographic} The modified result parameter or a new Cartographic instance if none was provided.
      */
     Extent.prototype.getSoutheast = function(result) {
-        if (typeof result === 'undefined') {
+        if (!defined(result)) {
             return new Cartographic(this.east, this.south);
         }
         result.longitude = this.east;
@@ -293,7 +353,7 @@ define([
      * @return {Cartographic} The modified result parameter or a new Cartographic instance if none was provided.
      */
     Extent.prototype.getCenter = function(result) {
-        if (typeof result === 'undefined') {
+        if (!defined(result)) {
             return new Cartographic((this.west + this.east) * 0.5, (this.south + this.north) * 0.5);
         }
         result.longitude = (this.west + this.east) * 0.5;
@@ -313,14 +373,14 @@ define([
      * @exception {DeveloperError} otherExtent is required.
      */
     Extent.prototype.intersectWith = function(otherExtent, result) {
-        if (typeof otherExtent === 'undefined') {
+        if (!defined(otherExtent)) {
             throw new DeveloperError('otherExtent is required.');
         }
         var west = Math.max(this.west, otherExtent.west);
         var south = Math.max(this.south, otherExtent.south);
         var east = Math.min(this.east, otherExtent.east);
         var north = Math.min(this.north, otherExtent.north);
-        if (typeof result === 'undefined') {
+        if (!defined(result)) {
             return new Extent(west, south, east, north);
         }
         result.west = west;
@@ -340,7 +400,7 @@ define([
      * @exception {DeveloperError} cartographic is required.
      */
     Extent.prototype.contains = function(cartographic) {
-        if (typeof cartographic === 'undefined') {
+        if (!defined(cartographic)) {
             throw new DeveloperError('cartographic is required.');
         }
         return cartographic.longitude >= this.west &&
@@ -363,18 +423,20 @@ define([
 
     var subsampleLlaScratch = new Cartographic();
     /**
-     * Samples this Extent so that it includes a list of Cartesian points suitable for passing to
+     * Samples this extent so that it includes a list of Cartesian points suitable for passing to
      * {@link BoundingSphere#fromPoints}.  Sampling is necessary to account
      * for extents that cover the poles or cross the equator.
      *
      * @param {Ellipsoid} [ellipsoid=Ellipsoid.WGS84] The ellipsoid to use.
+     * @param {Number} [surfaceHeight=0.0] The height of the extent above the ellipsoid.
      * @param {Array} [result] The array of Cartesians onto which to store the result.
      * @return {Array} The modified result parameter or a new Array of Cartesians instances if none was provided.
      */
-    Extent.prototype.subsample = function(ellipsoid, result) {
+    Extent.prototype.subsample = function(ellipsoid, surfaceHeight, result) {
         ellipsoid = defaultValue(ellipsoid, Ellipsoid.WGS84);
+        surfaceHeight = defaultValue(surfaceHeight, 0.0);
 
-        if (typeof result === 'undefined') {
+        if (!defined(result)) {
             result = [];
         }
         var length = 0;
@@ -385,6 +447,8 @@ define([
         var west = this.west;
 
         var lla = subsampleLlaScratch;
+        lla.height = surfaceHeight;
+
         lla.longitude = west;
         lla.latitude = north;
         result[length] = ellipsoid.cartographicToCartesian(lla, result[length]);

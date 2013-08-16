@@ -1,6 +1,7 @@
 /*global defineSuite*/
 defineSuite([
          'Scene/VRTheWorldTerrainProvider',
+         'Core/defined',
          'Core/loadImage',
          'Core/loadXML',
          'Core/DefaultProxy',
@@ -11,6 +12,7 @@ defineSuite([
          'ThirdParty/when'
      ], function(
          VRTheWorldTerrainProvider,
+         defined,
          loadImage,
          loadXML,
          DefaultProxy,
@@ -120,7 +122,7 @@ defineSuite([
         var provider = new VRTheWorldTerrainProvider({
             url : 'made/up/url'
         });
-        expect(provider.getLogo()).toBeUndefined();
+        expect(provider.getCredit()).toBeUndefined();
     });
 
     it('logo is defined if credit is provided', function() {
@@ -128,7 +130,7 @@ defineSuite([
             url : 'made/up/url',
             credit : 'thanks to our awesome made up contributors!'
         });
-        expect(provider.getLogo()).toBeDefined();
+        expect(provider.getCredit()).toBeDefined();
     });
 
     it('does not have a water mask', function() {
@@ -264,7 +266,7 @@ defineSuite([
             });
 
             waitsFor(function() {
-                return typeof loadedData !== 'undefined';
+                return defined(loadedData);
             }, 'request to complete');
 
             runs(function() {
