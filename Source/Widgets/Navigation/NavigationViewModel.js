@@ -19,13 +19,14 @@ define([
 
     var NavigationViewModel = function() {
 
-        this.zoomRingAngle = 0;
+        this._zoomRingAngle = 90;
+        knockout.track(this, ['_zoomRingAngle']);
         knockout.defineProperty(this, 'zoomRingAngle', {
             get : function () {
-                return this.zoomRingAngle;
+                return this._zoomRingAngle;
             },
             set : function (angle) {
-
+                this._zoomRingAngle = angle;
             }
         });
 
