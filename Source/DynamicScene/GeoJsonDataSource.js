@@ -1,7 +1,9 @@
 /*global define*/
-define(['../Core/createGuid',
+define([
+        '../Core/createGuid',
         '../Core/Cartographic',
         '../Core/Color',
+        '../Core/defined',
         '../Core/defineProperties',
         '../Core/DeveloperError',
         '../Core/RuntimeError',
@@ -16,25 +18,27 @@ define(['../Core/createGuid',
         './DynamicMaterialProperty',
         './DynamicObjectCollection',
         '../ThirdParty/when',
-        '../ThirdParty/topojson'], function(
-                createGuid,
-                Cartographic,
-                Color,
-                defineProperties,
-                DeveloperError,
-                RuntimeError,
-                Ellipsoid,
-                Event,
-                loadJson,
-                ConstantProperty,
-                DynamicObject,
-                DynamicPoint,
-                DynamicPolyline,
-                DynamicPolygon,
-                DynamicMaterialProperty,
-                DynamicObjectCollection,
-                when,
-                topojson) {
+        '../ThirdParty/topojson'
+    ], function(
+        createGuid,
+        Cartographic,
+        Color,
+        defined,
+        defineProperties,
+        DeveloperError,
+        RuntimeError,
+        Ellipsoid,
+        Event,
+        loadJson,
+        ConstantProperty,
+        DynamicObject,
+        DynamicPoint,
+        DynamicPolyline,
+        DynamicPolygon,
+        DynamicMaterialProperty,
+        DynamicObjectCollection,
+        when,
+        topojson) {
     "use strict";
 
     //DynamicPositionProperty is pretty hard to use with non-CZML based data
@@ -57,12 +61,12 @@ define(['../Core/createGuid',
     //we can't use it for them either.
     function createObject(geoJson, dynamicObjectCollection) {
         var id = geoJson.id;
-        if (typeof id === 'undefined' || geoJson.type !== 'Feature') {
+        if (!defined(id) || geoJson.type !== 'Feature') {
             id = createGuid();
         } else {
             var i = 2;
             var finalId = id;
-            while (typeof dynamicObjectCollection.getObject(finalId) !== 'undefined') {
+            while (defined(dynamicObjectCollection.getObject(finalId))) {
                 finalId = id + "_" + i;
                 i++;
             }
@@ -83,7 +87,7 @@ define(['../Core/createGuid',
 
     // GeoJSON processing functions
     function processFeature(dataSource, feature, notUsed, crsFunction, source) {
-        if (typeof feature.geometry === 'undefined') {
+        if (!defined(feature.geometry)) {
             throw new RuntimeError('feature.geometry is required.');
         }
 
@@ -93,7 +97,7 @@ define(['../Core/createGuid',
         } else {
             var geometryType = feature.geometry.type;
             var geometryHandler = geometryTypes[geometryType];
-            if (typeof geometryHandler === 'undefined') {
+            if (!defined(geometryHandler)) {
                 throw new RuntimeError('Unknown geometry type: ' + geometryType);
             }
             geometryHandler(dataSource, feature, feature.geometry, crsFunction, source);
@@ -113,7 +117,7 @@ define(['../Core/createGuid',
             var geometry = geometries[i];
             var geometryType = geometry.type;
             var geometryHandler = geometryTypes[geometryType];
-            if (typeof geometryHandler === 'undefined') {
+            if (!defined(geometryHandler)) {
                 throw new RuntimeError('Unknown geometry type: ' + geometryType);
             }
             geometryHandler(dataSource, geoJson, geometry, crsFunction, source);
@@ -344,15 +348,16 @@ define(['../Core/createGuid',
      * @exception {DeveloperError} url is required.
      */
     GeoJsonDataSource.prototype.loadUrl = function(url) {
-        if (typeof url === 'undefined') {
+        if (!defined(url)) {
             throw new DeveloperError('url is required.');
         }
 
         var dataSource = this;
-        return loadJson(url).then(function(geoJson) {
+        return when(loadJson(url), function(geoJson) {
             return dataSource.load(geoJson, url);
         }, function(error) {
             dataSource._error.raiseEvent(dataSource, error);
+            return when.reject(error);
         });
     };
 
@@ -373,46 +378,46 @@ define(['../Core/createGuid',
      * @exception {RuntimeError} Unknown crs type.
      */
     GeoJsonDataSource.prototype.load = function(geoJson, source) {
-        if (typeof geoJson === 'undefined') {
+        if (!defined(geoJson)) {
             throw new DeveloperError('geoJson is required.');
         }
 
         var typeHandler = geoJsonObjectTypes[geoJson.type];
-        if (typeof typeHandler === 'undefined') {
+        if (!defined(typeHandler)) {
             throw new DeveloperError('Unsupported GeoJSON object type: ' + geoJson.type);
         }
 
         //Check for a Coordinate Reference System.
         var crsFunction = defaultCrsFunction;
         var crs = geoJson.crs;
-        if (typeof crs !== 'undefined') {
+        if (defined(crs)) {
             if (crs === null) {
                 throw new RuntimeError('crs is null.');
             }
-            if (typeof crs.properties === 'undefined') {
+            if (!defined(crs.properties)) {
                 throw new RuntimeError('crs.properties is undefined.');
             }
 
             var properties = crs.properties;
             if (crs.type === 'name') {
                 crsFunction = GeoJsonDataSource.crsNames[properties.name];
-                if (typeof crsFunction === 'undefined') {
+                if (!defined(crsFunction)) {
                     throw new RuntimeError('Unknown crs name: ' + properties.name);
                 }
             } else if (crs.type === 'link') {
                 var handler = GeoJsonDataSource.crsLinkHrefs[properties.href];
-                if (typeof handler === 'undefined') {
+                if (!defined(handler)) {
                     handler = GeoJsonDataSource.crsLinkTypes[properties.type];
                 }
 
-                if (typeof handler === 'undefined') {
+                if (!defined(handler)) {
                     throw new RuntimeError('Unable to resolve crs link: ' + JSON.stringify(properties));
                 }
 
                 crsFunction = handler(properties);
             } else if (crs.type === 'EPSG') {
                 crsFunction = GeoJsonDataSource.crsNames['EPSG:' + properties.code];
-                if (typeof crsFunction === 'undefined') {
+                if (!defined(crsFunction)) {
                     throw new RuntimeError('Unknown crs EPSG code: ' + properties.code);
                 }
             } else {
@@ -422,10 +427,13 @@ define(['../Core/createGuid',
 
         this._dynamicObjectCollection.clear();
 
-        var that = this;
+        var dataSource = this;
         return when(crsFunction, function(crsFunction) {
-            typeHandler(that, geoJson, geoJson, crsFunction, source);
-            that._changed.raiseEvent(that);
+            typeHandler(dataSource, geoJson, geoJson, crsFunction, source);
+            dataSource._changed.raiseEvent(dataSource);
+        }, function(error) {
+            dataSource._error.raiseEvent(dataSource, error);
+            return when.reject(error);
         });
     };
 

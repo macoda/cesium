@@ -2,6 +2,7 @@
 defineSuite([
          'Scene/CesiumTerrainProvider',
          'Core/loadWithXhr',
+         'Core/defined',
          'Core/DefaultProxy',
          'Core/Ellipsoid',
          'Core/Math',
@@ -12,6 +13,7 @@ defineSuite([
      ], function(
          CesiumTerrainProvider,
          loadWithXhr,
+         defined,
          DefaultProxy,
          Ellipsoid,
          CesiumMath,
@@ -72,7 +74,7 @@ defineSuite([
         var provider = new CesiumTerrainProvider({
             url : 'made/up/url'
         });
-        expect(provider.getLogo()).toBeUndefined();
+        expect(provider.getCredit()).toBeUndefined();
     });
 
     it('logo is defined if credit is provided', function() {
@@ -80,7 +82,7 @@ defineSuite([
             url : 'made/up/url',
             credit : 'thanks to our awesome made up contributors!'
         });
-        expect(provider.getLogo()).toBeDefined();
+        expect(provider.getCredit()).toBeDefined();
     });
 
     it('has a water mask', function() {
@@ -145,7 +147,7 @@ defineSuite([
             });
 
             waitsFor(function() {
-                return typeof loadedData !== 'undefined';
+                return defined(loadedData);
             }, 'request to complete');
 
             runs(function() {

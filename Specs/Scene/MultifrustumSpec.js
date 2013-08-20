@@ -2,16 +2,17 @@
 defineSuite([
          'Specs/createScene',
          'Specs/destroyScene',
+         'Core/defined',
          'Core/destroyObject',
          'Core/BoundingSphere',
-         'Core/BoxTessellator',
+         'Core/BoxGeometry',
          'Core/Cartesian2',
          'Core/Cartesian3',
          'Core/Color',
          'Core/defaultValue',
          'Core/Math',
          'Core/Matrix4',
-         'Core/MeshFilters',
+         'Core/GeometryPipeline',
          'Core/PrimitiveType',
          'Renderer/BlendingState',
          'Renderer/BufferUsage',
@@ -23,16 +24,17 @@ defineSuite([
      ], 'Scene/Multifrustum', function(
          createScene,
          destroyScene,
+         defined,
          destroyObject,
          BoundingSphere,
-         BoxTessellator,
+         BoxGeometry,
          Cartesian2,
          Cartesian3,
          Color,
          defaultValue,
          CesiumMath,
          Matrix4,
-         MeshFilters,
+         GeometryPipeline,
          PrimitiveType,
          BlendingState,
          BufferUsage,
@@ -204,7 +206,7 @@ defineSuite([
         };
 
         Primitive.prototype.update = function(context, frameState, commandLists) {
-            if (typeof this._sp === 'undefined') {
+            if (!defined(this._sp)) {
                 var vs = '';
                 vs += 'attribute vec4 position;';
                 vs += 'void main()';
@@ -222,13 +224,13 @@ defineSuite([
                 var dimensions = new Cartesian3(500000.0, 500000.0, 500000.0);
                 var maximumCorner = dimensions.multiplyByScalar(0.5);
                 var minimumCorner = maximumCorner.negate();
-                var mesh = BoxTessellator.compute({
+                var geometry = BoxGeometry.createGeometry(new BoxGeometry({
                     minimumCorner: minimumCorner,
                     maximumCorner: maximumCorner
-                });
-                var attributeIndices = MeshFilters.createAttributeIndices(mesh);
-                this._va = context.createVertexArrayFromMesh({
-                    mesh: mesh,
+                }));
+                var attributeIndices = GeometryPipeline.createAttributeIndices(geometry);
+                this._va = context.createVertexArrayFromGeometry({
+                    geometry: geometry,
                     attributeIndices: attributeIndices,
                     bufferUsage: BufferUsage.STATIC_DRAW
                 });
