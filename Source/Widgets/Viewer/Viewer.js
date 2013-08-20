@@ -613,7 +613,9 @@ Either specify options.imageryProvider instead or set options.baseLayerPicker to
 
         var timelineExists = defined(this._timeline);
         var animationExists = defined(this._animation);
+        var navigationExists = defined(this._navigation);
         var animationContainer;
+        var navigationContainer;
 
         var resizeWidgets = !animationExists;
         var animationWidth = 0;
@@ -642,6 +644,35 @@ Either specify options.imageryProvider instead or set options.baseLayerPicker to
                 animationContainer.style.height = '70px';
                 resizeWidgets = true;
                 this._animation.resize();
+            }
+        }
+
+        var navigationWidth = 0;
+        if (navigationExists) {
+            var lastWidth = this._lastWidth;
+            navigationContainer = this._navigation.container;
+            if (width > 900) {
+                if (lastWidth <= 900) {
+                    navigationWidth = 169;
+                    navigationContainer.style.width = '169px';
+                    navigationContainer.style.height = '169px';
+                    resizeWidgets = true;
+                    this._navigation.resize();
+                }
+            } else if (width >= 600) {
+                if (lastWidth < 600 || lastWidth > 900) {
+                    navigationWidth = 136;
+                    navigationContainer.style.width = '136px';
+                    navigationContainer.style.height = '136px';
+                    resizeWidgets = true;
+                    this._navigation.resize();
+                }
+            } else if (lastWidth > 600 || lastWidth === 0) {
+                navigationWidth = 106;
+                navigationContainer.style.width = '106px';
+                navigationContainer.style.height = '106px';
+                resizeWidgets = true;
+                this._navigation.resize();
             }
         }
 

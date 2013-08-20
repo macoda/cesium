@@ -122,7 +122,7 @@ define([
             var x = clientX - centerX - rect.left;
             var y = clientY - centerY - rect.top;
 
-            var angle = Math.atan2(y, x) * 180 / Math.PI + 90;
+            var angle = Math.atan2(y, x) * 180 / Math.PI - 90;
             if (angle > 180) {
                 angle -= 360;
             }
@@ -302,7 +302,69 @@ define([
             setZoomRingPointer(that._zoomRingPointer, value);
         })];
 
+        this.applyThemeChanges();
+        this.resize();
+    };
 
+    defineProperties(Navigation.prototype, {
+       container : {
+           get : function() {
+               return this._container;
+           }
+       },
+
+       viewModel : {
+           get : function() {
+               return this._viewModel;
+           }
+       }
+    });
+
+    Navigation.prototype.resize = function() {
+        var parentWidth = this._container.clientWidth;
+        var parentHeight = this._container.clientHeight;
+        if (parentWidth === this._lastWidth && parentHeight === this._lastHeight) {
+            return;
+        }
+
+        var svg = this._svgNode;
+
+        //The width and height as the SVG was originally drawn
+        var baseWidth = 200;
+        var baseHeight = 200;
+
+        var width = parentWidth;
+        var height = parentHeight;
+
+        if(parentWidth === 0 && parentHeight === 0) {
+            width = baseWidth;
+            height = baseHeight;
+        } else if (parentWidth === 0) {
+            height = parentHeight;
+            width = baseWidth * (parentHeight / baseHeight);
+        } else if (parentHeight === 0) {
+            width = parentWidth;
+            height = baseHeight * (parentWidth / baseWidth);
+        }
+
+        var scaleX = width / baseWidth;
+        var scaleY = height / baseHeight;
+
+        svg.style.cssText = 'width: ' + width + 'px; height: ' + height + 'px; position: absolute; bottom: 0; left: 0;';
+        svg.setAttribute('width', width);
+        svg.setAttribute('height', height);
+        svg.setAttribute('viewBox', '0 0 ' + width + ' ' + height);
+
+        this._topG.setAttribute('transform', 'scale(' + scaleX + ',' + scaleY + ')');
+
+        this._centerX = Math.max(1, 100.0 * scaleX);
+        this._centerY = Math.max(1, 100.0 * scaleY);
+
+        this._lastHeight = parentHeight;
+        this._lastWidth = parentWidth;
+    };
+
+    Navigation.prototype.applyThemeChanges = function() {
         var defsElement = svgFromObject({
            tagName : 'defs',
            children : [{
