@@ -122,7 +122,7 @@ define([
             var x = clientX - centerX - rect.left;
             var y = clientY - centerY - rect.top;
 
-            var angle = Math.atan2(y, x) * 180 / Math.PI - 90;
+            var angle = Math.atan2(y, x) * 180 / Math.PI;
             if (angle > 180) {
                 angle -= 360;
             }
@@ -185,8 +185,8 @@ define([
         this._zoomRingPointer = svgFromObject({
             tagName : 'circle',
             'class' : 'cesium-navigation-zoomRingPointer',
-            cx : 20,
-            cy : 95,
+            cx : 80,
+            cy : 0,
             r : 10
         });
 
