@@ -15,18 +15,63 @@ define([
         knockout) {
     "use strict";
 
-    var maxZoomRingAngle = 100;
+    var maxZoomRingAngle = 60;
+    var maxTiltRingAngle = 60;
 
     var NavigationViewModel = function() {
 
-        this._zoomRingAngle = 180;
-        knockout.track(this, ['_zoomRingAngle']);
+        this._zoomRingAngle = 0;
+        this._tiltRingAngle = 0;
+        this._northRingAngle = 90;
+        this._pointerDistance = 0;
+        this._pointerDirection = 0;
+
+        knockout.track(this, ['_zoomRingAngle', '_tiltRingAngle', '_northRingAngle', '_pointerDistance', '_pointerDirection']);
+
         knockout.defineProperty(this, 'zoomRingAngle', {
             get : function () {
                 return this._zoomRingAngle;
             },
             set : function (angle) {
+                angle = Math.max(Math.min(angle, maxZoomRingAngle), -maxZoomRingAngle);
                 this._zoomRingAngle = angle;
+            }
+        });
+
+        knockout.defineProperty(this, 'tiltRingAngle', {
+            get : function () {
+                return this._tiltRingAngle;
+            },
+            set : function (angle) {
+                angle = Math.max(Math.min(angle, maxTiltRingAngle), -maxTiltRingAngle);
+                this._tiltRingAngle = angle;
+            }
+        });
+
+        knockout.defineProperty(this, 'northRingAngle', {
+            get : function () {
+                return this._northRingAngle;
+            },
+            set : function (angle) {
+                this._northRingAngle = angle;
+            }
+        });
+
+        knockout.defineProperty(this, 'pointerDistance', {
+            get : function () {
+                return this._pointerDistance;
+            },
+            set : function (distance) {
+                this._pointerDistance = distance;
+            }
+        });
+
+        knockout.defineProperty(this, 'pointerDirection', {
+            get : function () {
+                return this._pointerDirection;
+            },
+            set : function (direction) {
+                this._pointerDirection = direction;
             }
         });
 

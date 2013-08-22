@@ -60,8 +60,8 @@ define([
         return text;
     }
 
-    function setZoomRingPointer(zoomRingPointer, angle) {
-        zoomRingPointer.setAttribute('transform', 'translate(100, 100) rotate(' + angle + ')');
+    function setZoomTiltRingPointer(zoomTiltRingPointer, angle) {
+        zoomTiltRingPointer.setAttribute('transform', 'translate(100, 100) rotate(' + angle + ')');
     }
 
     function circularButton(x, y, path) {
@@ -122,7 +122,7 @@ define([
             var x = clientX - centerX - rect.left;
             var y = clientY - centerY - rect.top;
 
-            var angle = Math.atan2(y, x) * 180 / Math.PI;
+            var angle = Math.atan2(y, x) * 180 / Math.PI + 180;
             if (angle > 180) {
                 angle -= 360;
             }
@@ -185,7 +185,7 @@ define([
         this._zoomRingPointer = svgFromObject({
             tagName : 'circle',
             'class' : 'cesium-navigation-zoomRingPointer',
-            cx : 80,
+            cx : -80,
             cy : 0,
             r : 10
         });
@@ -194,9 +194,9 @@ define([
         zoomRingG.setAttribute('class', 'cesium-navigation-zoomRingG');
 
         zoomRingG.appendChild(zoomRing);
-        zoomRingG.appendChild(this._zoomRingPointer);
         zoomRingG.appendChild(zoomPlus);
         zoomRingG.appendChild(zoomMinus);
+        zoomRingG.appendChild(this._zoomRingPointer);
 
         var tiltRing = svgFromObject({
             tagName : 'use',
@@ -212,8 +212,8 @@ define([
         this._tiltRingPointer = svgFromObject({
             tagName : 'circle',
             'class' : 'cesium-navigation-tiltRingPointer',
-            cx : 180,
-            cy : 95,
+            cx : 80,
+            cy : 0,
             r : 10
         });
 
@@ -221,9 +221,9 @@ define([
         tiltRingG.setAttribute('class', 'cesium-navigation-tiltRingG');
 
         tiltRingG.appendChild(tiltRing);
-        tiltRingG.appendChild(this._tiltRingPointer);
         tiltRingG.appendChild(tiltTiltRect);
         tiltRingG.appendChild(tiltRect);
+        tiltRingG.appendChild(this._tiltRingPointer);
 
         var knobG = svgFromObject({
            tagName : 'g',
@@ -299,7 +299,11 @@ define([
         this._tiltRingPointer.addEventListener('mousedown', mouseCallback, true);
         this._subscriptions = [
         subscribeAndEvaluate(viewModel, 'zoomRingAngle', function(value) {
-            setZoomRingPointer(that._zoomRingPointer, value);
+            setZoomTiltRingPointer(that._zoomRingPointer, value);
+        }),
+
+        subscribeAndEvaluate(viewModel, 'tiltRingAngle', function(value) {
+            setZoomTiltRingPointer(that._tiltRingPointer, value);
         })];
 
         this.applyThemeChanges();
