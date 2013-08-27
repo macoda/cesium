@@ -19,6 +19,7 @@ define([
     var xlinkNS = "http://www.w3.org/1999/xlink";
 
     var widgetForZoomDrag;
+    var pointerDragged;
 
     function subscribeAndEvaluate(owner, observablePropertyName, callback, target) {
         callback.call(target, owner[observablePropertyName]);
@@ -117,12 +118,16 @@ define([
                 return;
             }
 
-            var pointerRect = widget._zoomRingPointer.getBoundingClientRect();
+            var pointerRect = pointerDragged.getBoundingClientRect();
 
             var x = clientX - centerX - rect.left;
             var y = clientY - centerY - rect.top;
 
-            var angle = Math.atan2(y, x) * 180 / Math.PI + 180;
+            var angle = Math.atan2(y, x) * 180 / Math.PI;
+            if (pointerDragged === widget._zoomRingPointer) {
+                angle += 180;
+            }
+
             if (angle > 180) {
                 angle -= 360;
             }
@@ -131,7 +136,11 @@ define([
             if (zoomRingDragging || (clientX < pointerRect.right && clientX > pointerRect.left && clientY > pointerRect.top && clientY < pointerRect.bottom)) {
                 widgetForZoomDrag = widget;
                 viewModel.zoomRingDragging = true;
-                viewModel.zoomRingAngle = angle;
+                if (pointerDragged === widget._zoomRingPointer) {
+                    viewModel.zoomRingAngle = angle;
+                } else if (pointerDragged === widget._tiltRingPointer) {
+                    viewModel.tiltRingAngle = angle;
+                }
             } else if (angle < zoomRingAngle) {
                 viewModel.zoomIn();
             } else if (angle > zoomRingAngle) {
@@ -140,6 +149,7 @@ define([
             e.preventDefault();
         } else {
             widgetForZoomDrag = undefined;
+            pointerDragged = undefined;
             viewModel.zoomRingDragging = false;
         }
     }
@@ -291,12 +301,22 @@ define([
         };
         this._mouseCallback = mouseCallback;
 
+        var zoomMouseCallback = function(e) {
+            pointerDragged = that._zoomRingPointer;
+            setPointerFromMouse(that, e);
+        };
+
+        var tiltMouseCallback = function(e) {
+            pointerDragged = that._tiltRingPointer;
+            setPointerFromMouse(that, e);
+        };
+
         document.addEventListener('mousemove', mouseCallback, true);
         document.addEventListener('mouseup', mouseCallback, true);
         this._knobOuterN.addEventListener('mousedown', mouseCallback, true);
         this._panJoystick.addEventListener('mousedown', mouseCallback, true);
-        this._zoomRingPointer.addEventListener('mousedown', mouseCallback, true);
-        this._tiltRingPointer.addEventListener('mousedown', mouseCallback, true);
+        this._zoomRingPointer.addEventListener('mousedown', zoomMouseCallback, true);
+        this._tiltRingPointer.addEventListener('mousedown', tiltMouseCallback, true);
         this._subscriptions = [
         subscribeAndEvaluate(viewModel, 'zoomRingAngle', function(value) {
             setZoomTiltRingPointer(that._zoomRingPointer, value);
