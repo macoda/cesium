@@ -15,14 +15,14 @@ define([
         knockout) {
     "use strict";
 
-    var maxZoomRingAngle = 60;
-    var maxTiltRingAngle = 60;
+    var maxZoomRingAngle = 45;
+    var maxTiltRingAngle = 45;
 
     var NavigationViewModel = function() {
 
         this._zoomRingAngle = 0;
         this._tiltRingAngle = 0;
-        this._northRingAngle = 90;
+        this._northRingAngle = 0;
         this._pointerDistance = 0;
         this._pointerDirection = 0;
 

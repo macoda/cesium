@@ -18,7 +18,7 @@ define([
     var svgNS = "http://www.w3.org/2000/svg";
     var xlinkNS = "http://www.w3.org/1999/xlink";
 
-    var widgetForZoomDrag;
+    var widgetForDrag;
     var pointerDragged;
 
     function subscribeAndEvaluate(owner, observablePropertyName, callback, target) {
@@ -89,7 +89,7 @@ define([
         var viewModel = widget._viewModel;
         var zoomRingDragging = viewModel.zoomRingDragging;
 
-        if (zoomRingDragging && (widgetForZoomDrag !== widget)) {
+        if (zoomRingDragging && (widgetForDrag !== widget)) {
             return;
         }
 
@@ -126,6 +126,8 @@ define([
             var angle = Math.atan2(y, x) * 180 / Math.PI;
             if (pointerDragged === widget._zoomRingPointer) {
                 angle += 180;
+            } else if (pointerDragged === widget._knobOuterN) {
+                angle += 90;
             }
 
             if (angle > 180) {
@@ -134,12 +136,14 @@ define([
 
             var zoomRingAngle = viewModel.zoomRingAngle;
             if (zoomRingDragging || (clientX < pointerRect.right && clientX > pointerRect.left && clientY > pointerRect.top && clientY < pointerRect.bottom)) {
-                widgetForZoomDrag = widget;
+                widgetForDrag = widget;
                 viewModel.zoomRingDragging = true;
                 if (pointerDragged === widget._zoomRingPointer) {
                     viewModel.zoomRingAngle = angle;
                 } else if (pointerDragged === widget._tiltRingPointer) {
                     viewModel.tiltRingAngle = angle;
+                } else if (pointerDragged === widget._knobOuterN) {
+                    viewModel.northRingAngle = angle;
                 }
             } else if (angle < zoomRingAngle) {
                 viewModel.zoomIn();
@@ -148,7 +152,7 @@ define([
             }
             e.preventDefault();
         } else {
-            widgetForZoomDrag = undefined;
+            widgetForDrag = undefined;
             pointerDragged = undefined;
             viewModel.zoomRingDragging = false;
         }
@@ -240,11 +244,7 @@ define([
            transform : 'translate(100,100)'
         });
 
-        var knobOuterG = svgFromObject({
-            tagName : 'g'
-        });
-
-        this._knobOuter = svgFromObject({
+        var knobOuter = svgFromObject({
             tagName : 'circle',
             'class' : 'cesium-navigation-knobOuter',
             cx : 0,
@@ -253,9 +253,6 @@ define([
         });
 
         this._knobOuterN = svgText(0, -42, 'N');
-
-        knobOuterG.appendChild(this._knobOuter);
-        knobOuterG.appendChild(this._knobOuterN);
 
         var knobInnerAndShieldSize = 40;
 
@@ -283,14 +280,16 @@ define([
             r : 10
         });
 
-        knobG.appendChild(knobOuterG);
+        knobG.appendChild(knobOuter);
         knobG.appendChild(knobInner);
         knobG.appendChild(knobShield);
         knobG.appendChild(this._panJoystick);
+        //knobG.appendChild(this._knobOuterN);
 
         topG.appendChild(zoomRingG);
         topG.appendChild(tiltRingG);
         topG.appendChild(knobG);
+        topG.appendChild(this._knobOuterN);
 
         svg.appendChild(topG);
         container.appendChild(svg);
@@ -311,9 +310,14 @@ define([
             setPointerFromMouse(that, e);
         };
 
+        var northRingMouseCallback = function(e) {
+            pointerDragged = that._knobOuterN;
+            setPointerFromMouse(that, e);
+        }
+
         document.addEventListener('mousemove', mouseCallback, true);
         document.addEventListener('mouseup', mouseCallback, true);
-        this._knobOuterN.addEventListener('mousedown', mouseCallback, true);
+        this._knobOuterN.addEventListener('mousedown', northRingMouseCallback, true);
         this._panJoystick.addEventListener('mousedown', mouseCallback, true);
         this._zoomRingPointer.addEventListener('mousedown', zoomMouseCallback, true);
         this._tiltRingPointer.addEventListener('mousedown', tiltMouseCallback, true);
@@ -324,6 +328,10 @@ define([
 
         subscribeAndEvaluate(viewModel, 'tiltRingAngle', function(value) {
             setZoomTiltRingPointer(that._tiltRingPointer, value);
+        }),
+
+        subscribeAndEvaluate(viewModel, 'northRingAngle', function(value) {
+            setZoomTiltRingPointer(that._knobOuterN, value);
         })];
 
         this.applyThemeChanges();
