@@ -17,6 +17,7 @@ define([
 
     var maxZoomRingAngle = 45;
     var maxTiltRingAngle = 45;
+    var maxPointerDistance = 40;
 
     var NavigationViewModel = function() {
 
@@ -62,6 +63,7 @@ define([
                 return this._pointerDistance;
             },
             set : function (distance) {
+                distance = Math.min(distance, maxPointerDistance);
                 this._pointerDistance = distance;
             }
         });
