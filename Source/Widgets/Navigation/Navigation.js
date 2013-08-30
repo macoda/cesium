@@ -124,6 +124,7 @@ define([
             var y = clientY - centerY - rect.top;
 
             var angle = Math.atan2(y, x) * 180 / Math.PI;
+            var distance = Math.sqrt(x*x + y*y);
             if (pointerDragged === widget._zoomRingPointer) {
                 angle += 180;
             } else if (pointerDragged === widget._knobOuterN) {
@@ -144,6 +145,9 @@ define([
                     viewModel.tiltRingAngle = angle;
                 } else if (pointerDragged === widget._knobOuterN) {
                     viewModel.northRingAngle = angle;
+                } else if (pointerDragged === widget._panJoystick) {
+                    viewModel.pointerDistance = distance;
+                    viewModel.pointerDirection = angle;
                 }
             } else if (angle < zoomRingAngle) {
                 viewModel.zoomIn();
@@ -280,11 +284,14 @@ define([
             r : 10
         });
 
+        this._panG = document.createElementNS(svgNS, 'g');
+
+        this._panG.appendChild(this._panJoystick);
+
         knobG.appendChild(knobOuter);
         knobG.appendChild(knobInner);
         knobG.appendChild(knobShield);
-        knobG.appendChild(this._panJoystick);
-        //knobG.appendChild(this._knobOuterN);
+        knobG.appendChild(this._panG);
 
         topG.appendChild(zoomRingG);
         topG.appendChild(tiltRingG);
@@ -313,12 +320,17 @@ define([
         var northRingMouseCallback = function(e) {
             pointerDragged = that._knobOuterN;
             setPointerFromMouse(that, e);
-        }
+        };
+
+        var panJoystickMouseCallback = function(e) {
+            pointerDragged = that._panJoystick;
+            setPointerFromMouse(that, e);
+        };
 
         document.addEventListener('mousemove', mouseCallback, true);
         document.addEventListener('mouseup', mouseCallback, true);
         this._knobOuterN.addEventListener('mousedown', northRingMouseCallback, true);
-        this._panJoystick.addEventListener('mousedown', mouseCallback, true);
+        this._panJoystick.addEventListener('mousedown', panJoystickMouseCallback, true);
         this._zoomRingPointer.addEventListener('mousedown', zoomMouseCallback, true);
         this._tiltRingPointer.addEventListener('mousedown', tiltMouseCallback, true);
         this._subscriptions = [
@@ -332,6 +344,14 @@ define([
 
         subscribeAndEvaluate(viewModel, 'northRingAngle', function(value) {
             setZoomTiltRingPointer(that._knobOuterN, value);
+        }),
+
+        subscribeAndEvaluate(viewModel, 'pointerDistance', function(distance) {
+            that._panJoystick.setAttribute('transform', 'translate(' + distance + ', 0)');
+        }),
+
+        subscribeAndEvaluate(viewModel, 'pointerDirection', function(direction) {
+            that._panG.setAttribute('transform', 'rotate(' + direction + ')');
         })];
 
         this.applyThemeChanges();
