@@ -1,14 +1,18 @@
 /*global define*/
 define([
+        '../../Core/defined',
         '../../Core/defineProperties',
         '../../Core/DeveloperError',
+        '../../Scene/SceneMode',
         '../createCommand',
         '../ToggleButtonViewModel',
         '../../ThirdParty/sprintf',
         '../../ThirdParty/knockout'
     ], function(
+        defined,
         defineProperties,
         DeveloperError,
+        SceneMode,
         createCommand,
         ToggleButtonViewModel,
         sprintf,
@@ -19,7 +23,12 @@ define([
     var maxTiltRingAngle = 45;
     var maxPointerDistance = 40;
 
-    var NavigationViewModel = function() {
+    var NavigationViewModel = function(cameraController) {
+        if (!defined(cameraController)) {
+            throw new DeveloperError('cameraController is required.');
+        }
+
+        this._cameraController = cameraController;
 
         this._zoomRingAngle = 0;
         this._tiltRingAngle = 0;
@@ -102,6 +111,31 @@ define([
             }
         }
     });
+
+    function update2D(cameraController) {
+
+    }
+
+    function updateCV(cameraController) {
+
+    }
+
+    function update3D(cameraController) {
+        cameraController.zoomIn(10000);
+    }
+
+    NavigationViewModel.prototype.update = function(mode) {
+        var cameraController = this._cameraController;
+        if (mode === SceneMode.SCENE2D) {
+            update2D(cameraController);
+        } else if (mode === SceneMode.COLUMBUS_VIEW) {
+            this._horizontalRotationAxis = Cartesian3.UNIT_Z;
+            updateCV(cameraController);
+        } else if (mode === SceneMode.SCENE3D) {
+            this._horizontalRotationAxis = undefined;
+            update3D(cameraController);
+        }
+    };
 
     return NavigationViewModel;
 });

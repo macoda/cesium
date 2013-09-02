@@ -252,7 +252,7 @@ Either specify options.imageryProvider instead or set options.baseLayerPicker to
             var navigationContainer = document.createElement('div');
             navigationContainer.className = 'cesium-viewer-navigationContainer';
             viewerContainer.appendChild(navigationContainer);
-            navigation = new Navigation(navigationContainer, new NavigationViewModel(this._clockViewModel));
+            navigation = new Navigation(navigationContainer, new NavigationViewModel(cesiumWidget.scene.getCamera().controller));
         }
 
         //Timeline
@@ -706,6 +706,9 @@ Either specify options.imageryProvider instead or set options.baseLayerPicker to
      * @memberof Viewer
      */
     Viewer.prototype.render = function() {
+        if(defined(this._navigation)) {
+            this._navigation.viewModel.update(this.scene.mode);
+        }
         this._cesiumWidget.render();
     };
 
