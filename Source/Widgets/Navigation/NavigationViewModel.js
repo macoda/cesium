@@ -1,17 +1,25 @@
 /*global define*/
 define([
+        '../../Core/Cartesian3',
         '../../Core/defined',
         '../../Core/defineProperties',
         '../../Core/DeveloperError',
+        '../../Core/Ellipsoid',
+        '../../Core/FAR',
+        '../../Core/Math',
         '../../Scene/SceneMode',
         '../createCommand',
         '../ToggleButtonViewModel',
         '../../ThirdParty/sprintf',
         '../../ThirdParty/knockout'
     ], function(
+        Cartesian3,
         defined,
         defineProperties,
         DeveloperError,
+        Ellipsoid,
+        FAR,
+        CesiumMath,
         SceneMode,
         createCommand,
         ToggleButtonViewModel,
@@ -29,6 +37,15 @@ define([
         }
 
         this._cameraController = cameraController;
+        this._ellipsoid = Ellipsoid.WGS84;
+
+        this.maximumMovementRatio = 0.1;
+        this.minimumZoomDistance = 20.0;
+        this.maximumZoomDistance = Number.POSITIVE_INFINITY;
+
+        this._zoomFactor = 1;
+        this._minimumZoomRate = 20.0;
+        this._maximumZoomRate = FAR;
 
         this._zoomRingAngle = 0;
         this._tiltRingAngle = 0;
@@ -112,28 +129,72 @@ define([
         }
     });
 
-    function update2D(cameraController) {
+    function handleZoom(object, zoomFactor, distanceMeasure, unitPositionDotDirection) {
+        var percentage = 1.0;
+        if (defined(unitPositionDotDirection)) {
+            percentage = CesiumMath.clamp(Math.abs(unitPositionDotDirection), 0.25, 1.0);
+        }
+
+        var minHeight = object.minimumZoomDistance * percentage;
+        var maxHeight = object.maximumZoomDistance;
+
+        var minDistance = distanceMeasure - minHeight;
+        var zoomRate = zoomFactor * minDistance;
+        zoomRate = CesiumMath.clamp(zoomRate, object._minimumZoomRate, object._maximumZoomRate);
+
+        var zoomAngleRatio = object.zoomRingAngle / 360;
+        zoomAngleRatio = Math.min(zoomAngleRatio, object.maximumMovementRatio);
+        var distance = zoomRate * zoomAngleRatio;
+
+        if (distance > 0.0 && Math.abs(distanceMeasure - minHeight) < 1.0) {
+            return;
+        }
+
+        if (distance < 0.0 && Math.abs(distanceMeasure - maxHeight) < 1.0) {
+            return;
+        }
+
+        if (distanceMeasure - distance < minHeight) {
+            distance = distanceMeasure - minHeight - 1.0;
+        } else if (distanceMeasure - distance > maxHeight) {
+            distance = distanceMeasure - maxHeight;
+        }
+
+        object._cameraController.zoomIn(distance);
+    }
+
+    var zoom3DUnitPosition = new Cartesian3();
+    function zoom3D(object) {
+        var camera = object._cameraController._camera;
+        var ellipsoid = object._ellipsoid;
+
+        var height = ellipsoid.cartesianToCartographic(camera.position).height;
+        var unitPosition = Cartesian3.normalize(camera.position, zoom3DUnitPosition);
+
+        handleZoom(object, object._zoomFactor, height, Cartesian3.dot(unitPosition, camera.direction));
+    }
+
+    function update2D(object) {
 
     }
 
-    function updateCV(cameraController) {
+    function updateCV(object) {
 
     }
 
-    function update3D(cameraController) {
-        cameraController.zoomIn(10000);
+    function update3D(object) {
+        zoom3D(object);
     }
 
     NavigationViewModel.prototype.update = function(mode) {
-        var cameraController = this._cameraController;
         if (mode === SceneMode.SCENE2D) {
-            update2D(cameraController);
+            update2D(this);
         } else if (mode === SceneMode.COLUMBUS_VIEW) {
             this._horizontalRotationAxis = Cartesian3.UNIT_Z;
-            updateCV(cameraController);
+            updateCV(this);
         } else if (mode === SceneMode.SCENE3D) {
             this._horizontalRotationAxis = undefined;
-            update3D(cameraController);
+            update3D(this);
         }
     };
 
