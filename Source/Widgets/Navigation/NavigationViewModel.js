@@ -146,7 +146,12 @@ define([
         var zoomRate = zoomFactor * minDistance;
         zoomRate = CesiumMath.clamp(zoomRate, object._minimumZoomRate, object._maximumZoomRate);
 
-        var zoomAngleRatio = object.zoomRingAngle / 360;
+        var zoomAngleRatio = 0;
+        if (Math.abs(object.zoomRingAngle) > 3 && Math.abs(object.zoomRingAngle) < 25) {
+            zoomAngleRatio = object.zoomRingAngle / 1440;
+        } else {
+            zoomAngleRatio = object.zoomRingAngle / 360;
+        }
         zoomAngleRatio = Math.min(zoomAngleRatio, object.maximumMovementRatio);
         var distance = zoomRate * zoomAngleRatio;
 
