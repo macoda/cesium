@@ -43,6 +43,10 @@ define([
         this.minimumZoomDistance = 20.0;
         this.maximumZoomDistance = Number.POSITIVE_INFINITY;
 
+        this.zoomRingDragging = false;
+        this.tiltRingDragging = false;
+        this.northRingDragging = false;
+
         this._zoomFactor = 1;
         this._minimumZoomRate = 20.0;
         this._maximumZoomRate = FAR;
@@ -187,6 +191,15 @@ define([
     }
 
     NavigationViewModel.prototype.update = function(mode) {
+
+        if (!this.zoomRingDragging) {
+            if (Math.abs(this.zoomRingAngle) > CesiumMath.EPSILON3) {
+                this.zoomRingAngle *= 0.9;
+            } else {
+                this.zoomRingAngle = 0;
+            }
+        }
+
         if (mode === SceneMode.SCENE2D) {
             update2D(this);
         } else if (mode === SceneMode.COLUMBUS_VIEW) {
