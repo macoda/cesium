@@ -354,6 +354,8 @@ define([
         this._zoomRingPointer.addEventListener('mousedown', zoomMouseCallback, true);
         this._tiltRingPointer.addEventListener('mousedown', tiltMouseCallback, true);
         this._zoomRing.addEventListener('mousedown', zoomMouseCallback, true);
+        zoomPlus.addEventListener('mousedown', zoomMouseCallback, true);
+        zoomMinus.addEventListener('mousedown', zoomMouseCallback, true);
         this._subscriptions = [
         subscribeAndEvaluate(viewModel, 'zoomRingAngle', function(value) {
             setZoomTiltRingPointer(that._zoomRingPointer, value);
