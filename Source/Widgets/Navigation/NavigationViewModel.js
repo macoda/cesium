@@ -46,6 +46,7 @@ define([
         this.zoomRingDragging = false;
         this.tiltRingDragging = false;
         this.northRingDragging = false;
+        this.panJoystickDragging = false;
 
         this._zoomFactor = 1;
         this._minimumZoomRate = 20.0;

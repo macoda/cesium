@@ -85,17 +85,30 @@ define([
         return svgFromObject(button);
     }
 
+    function getDragging(widget) {
+        var viewModel = widget._viewModel;
+        if (pointerDragged === widget._zoomRingPointer) {
+            return viewModel.zoomRingDragging;
+        } else if (pointerDragged === widget._tiltRingPointer) {
+            return viewModel.tiltRingDragging;
+        } else if (pointerDragged === widget._knobOuterN) {
+            return viewModel.northRingDragging;
+        } else if (pointerDragged === widget._panJoystick) {
+            return viewModel.panJoystickDragging;
+        }
+    }
+
     function setPointerFromMouse(widget, e) {
         var viewModel = widget._viewModel;
-        var zoomRingDragging = viewModel.zoomRingDragging;
+        var pointerDragging = getDragging(widget);
 
-        if (zoomRingDragging && (widgetForDrag !== widget)) {
+        if (pointerDragging && (widgetForDrag !== widget)) {
             return;
         }
 
-        if (e.type === 'mousedown' || (zoomRingDragging && e.type === 'mousemove') ||
+        if (e.type === 'mousedown' || (pointerDragging && e.type === 'mousemove') ||
                 (e.type === 'touchstart' && e.touches.length === 1) ||
-                (zoomRingDragging && e.type === 'touchmove' && e.touches.length === 1)) {
+                (pointerDragging && e.type === 'touchmove' && e.touches.length === 1)) {
             var centerX = widget._centerX;
             var centerY = widget._centerY;
             var svg = widget._svgNode;
@@ -110,7 +123,7 @@ define([
                 clientY = e.clientY;
             }
 
-            if (!zoomRingDragging &&
+            if (!pointerDragging &&
                 (clientX > rect.right ||
                  clientX < rect.left ||
                  clientY < rect.top ||
@@ -135,30 +148,37 @@ define([
                 angle -= 360;
             }
 
-            var zoomRingAngle = viewModel.zoomRingAngle;
-            if (zoomRingDragging || (clientX < pointerRect.right && clientX > pointerRect.left && clientY > pointerRect.top && clientY < pointerRect.bottom)) {
+            if (pointerDragging || (clientX < pointerRect.right && clientX > pointerRect.left && clientY > pointerRect.top && clientY < pointerRect.bottom)) {
                 widgetForDrag = widget;
-                viewModel.zoomRingDragging = true;
                 if (pointerDragged === widget._zoomRingPointer) {
+                    viewModel.zoomRingDragging = true;
                     viewModel.zoomRingAngle = angle;
                 } else if (pointerDragged === widget._tiltRingPointer) {
+                    viewModel.tiltRingDragging = true;
                     viewModel.tiltRingAngle = angle;
                 } else if (pointerDragged === widget._knobOuterN) {
+                    viewModel.northRingDragging = true;
                     viewModel.northRingAngle = angle;
                 } else if (pointerDragged === widget._panJoystick) {
+                    viewModel.panJoystickDragging = true;
                     viewModel.pointerDistance = distance;
                     viewModel.pointerDirection = angle;
                 }
-            } else if (angle < zoomRingAngle) {
-                viewModel.zoomIn();
-            } else if (angle > zoomRingAngle) {
-                viewModel.zoomOut();
+            } else {
+                widgetForDrag = widget;
+                if (pointerDragged === widget._zoomRingPointer) {
+                    viewModel.zoomRingDragging = true;
+                    viewModel.zoomRingAngle = angle;
+                }
             }
             e.preventDefault();
         } else {
             widgetForDrag = undefined;
             pointerDragged = undefined;
             viewModel.zoomRingDragging = false;
+            viewModel.tiltRingDragging = false;
+            viewModel.northRingDragging = false;
+            viewModel.panJoystickDragging = false;
         }
     }
 
@@ -333,6 +353,7 @@ define([
         this._panJoystick.addEventListener('mousedown', panJoystickMouseCallback, true);
         this._zoomRingPointer.addEventListener('mousedown', zoomMouseCallback, true);
         this._tiltRingPointer.addEventListener('mousedown', tiltMouseCallback, true);
+        this._zoomRing.addEventListener('mousedown', zoomMouseCallback, true);
         this._subscriptions = [
         subscribeAndEvaluate(viewModel, 'zoomRingAngle', function(value) {
             setZoomTiltRingPointer(that._zoomRingPointer, value);
