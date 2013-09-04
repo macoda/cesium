@@ -1,6 +1,9 @@
 /*global define*/
 define([
+        '../../Core/Cartesian2',
         '../../Core/Cartesian3',
+        '../../Core/Cartesian4',
+        '../../Core/Cartographic',
         '../../Core/defined',
         '../../Core/defineProperties',
         '../../Core/DeveloperError',
@@ -13,7 +16,10 @@ define([
         '../../ThirdParty/sprintf',
         '../../ThirdParty/knockout'
     ], function(
+        Cartesian2,
         Cartesian3,
+        Cartesian4,
+        Cartographic,
         defined,
         defineProperties,
         DeveloperError,
@@ -173,6 +179,27 @@ define([
         object._cameraController.zoomIn(distance);
     }
 
+    function pan3D(object) {
+        var cameraController = object._cameraController;
+
+        var magnitude = object._pointerDistance;
+        var angle = CesiumMath.TWO_PI * object._pointerDirection / 360;
+
+        if (!defined(cameraController.constrainedAxis)) {
+            // CAMERA TODO: implement for constrainedAxis
+        } else {
+            var deltaPhi = 0;
+            var deltaTheta = 0;
+            if (magnitude > 5) {
+                deltaPhi = magnitude * Math.cos(angle) / 1000;
+                deltaTheta = magnitude * Math.sin(angle) / 1000;
+            }
+
+            cameraController.rotateRight(deltaPhi);
+            cameraController.rotateUp(deltaTheta);
+        }
+    }
+
     var zoom3DUnitPosition = new Cartesian3();
     function zoom3D(object) {
         var camera = object._cameraController._camera;
@@ -194,18 +221,37 @@ define([
 
     function update3D(object) {
         zoom3D(object);
+        pan3D(object);
     }
 
-    NavigationViewModel.prototype.update = function(mode) {
-
-        if (!this.zoomRingDragging) {
-            if (Math.abs(this.zoomRingAngle) > CesiumMath.EPSILON3) {
-                this.zoomRingAngle *= 0.9;
+    function resetPointers(object) {
+        if (!object.zoomRingDragging) {
+            if (Math.abs(object.zoomRingAngle) > CesiumMath.EPSILON3) {
+                object.zoomRingAngle *= 0.9;
             } else {
-                this.zoomRingAngle = 0;
+                object.zoomRingAngle = 0;
             }
         }
 
+        if (!object.tiltRingDragging) {
+            if (Math.abs(object.tiltRingAngle) > CesiumMath.EPSILON3) {
+                object.tiltRingAngle *= 0.9;
+            } else {
+                object.tiltRingAngle = 0;
+            }
+        }
+
+        if (!object.panJoystickDragging) {
+            if (Math.abs(object.pointerDistance) > CesiumMath.EPSILON3) {
+                object.pointerDistance *= 0.9;
+            } else {
+                object.pointerDistance = 0;
+            }
+        }
+    }
+
+    NavigationViewModel.prototype.update = function(mode) {
+        resetPointers(this);
         if (mode === SceneMode.SCENE2D) {
             update2D(this);
         } else if (mode === SceneMode.COLUMBUS_VIEW) {
