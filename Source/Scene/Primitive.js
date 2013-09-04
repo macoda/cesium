@@ -15,11 +15,13 @@ define([
         '../Core/TaskProcessor',
         '../Core/GeographicProjection',
         '../Core/Queue',
+        '../Core/clone',
         '../Renderer/BufferUsage',
         '../Renderer/VertexLayout',
         '../Renderer/CommandLists',
         '../Renderer/DrawCommand',
-        '../Renderer/createPickFragmentShaderSource',
+        '../Renderer/createShaderSource',
+        '../Renderer/CullFace',
         './PrimitivePipeline',
         './PrimitiveState',
         './SceneMode',
@@ -40,11 +42,13 @@ define([
         TaskProcessor,
         GeographicProjection,
         Queue,
+        clone,
         BufferUsage,
         VertexLayout,
         CommandLists,
         DrawCommand,
-        createPickFragmentShaderSource,
+        createShaderSource,
+        CullFace,
         PrimitivePipeline,
         PrimitiveState,
         SceneMode,
@@ -249,8 +253,10 @@ define([
 
         this._va = [];
         this._attributeIndices = undefined;
+        this._primitiveType = undefined;
 
-        this._rs = undefined;
+        this._frontFaceRS = undefined;
+        this._backFaceRS = undefined;
         this._sp = undefined;
 
         this._pickSP = undefined;
@@ -496,22 +502,7 @@ define([
 
                     length = clonedInstances.length;
                     var transferableObjects = [];
-                    for (i = 0; i < length; ++i) {
-                        geometry = clonedInstances[i].geometry;
-                        attributes = geometry.attributes;
-                        for (var name in attributes) {
-                            if (attributes.hasOwnProperty(name) &&
-                                    defined(attributes[name]) &&
-                                    defined(attributes[name].values) &&
-                                    transferableObjects.indexOf(attributes[name].values.buffer) < 0) {
-                                transferableObjects.push(attributes[name].values.buffer);
-                            }
-                        }
-
-                        if (defined(geometry.indices)) {
-                            transferableObjects.push(geometry.indices.buffer);
-                        }
-                    }
+                    PrimitivePipeline.transferInstances(clonedInstances, transferableObjects);
 
                     pickColors = [];
                     for (i = 0; i < length; ++i) {
@@ -535,6 +526,9 @@ define([
                     this.state = PrimitiveState.COMBINING;
 
                     when(promise, function(result) {
+                        PrimitivePipeline.receiveGeometries(result.geometries);
+                        PrimitivePipeline.receivePerInstanceAttributes(result.vaAttributes);
+
                         that._geometries = result.geometries;
                         that._attributeIndices = result.attributeIndices;
                         that._vaAttributes = result.vaAttributes;
@@ -637,24 +631,7 @@ define([
             }
 
             this._va = va;
-
-            for (i = 0; i < length; ++i) {
-                geometry = geometries[i];
-
-                // renderState, shaderProgram, and uniformMap for commands are set below.
-
-                colorCommand = new DrawCommand();
-                colorCommand.owner = this;
-                colorCommand.primitiveType = geometry.primitiveType;
-                colorCommand.vertexArray = this._va[i];
-                colorCommands.push(colorCommand);
-
-                pickCommand = new DrawCommand();
-                pickCommand.owner = this;
-                pickCommand.primitiveType = geometry.primitiveType;
-                pickCommand.vertexArray = this._va[i];
-                pickCommands.push(pickCommand);
-            }
+            this._primitiveType = geometries[0].primitiveType;
 
             if (this._releaseGeometryInstances) {
                 this.geometryInstances = undefined;
@@ -686,7 +663,19 @@ define([
         }
 
         if (createRS) {
-            this._rs = context.createRenderState(appearance.renderState);
+            if (appearance.closed && appearance.translucent) {
+                var rs = clone(appearance.renderState, false);
+                rs.cull = {
+                    enabled : true,
+                    face : CullFace.BACK
+                };
+                this._frontFaceRS = context.createRenderState(rs);
+
+                rs.cull.face = CullFace.FRONT;
+                this._backFaceRS = context.createRenderState(rs);
+            } else {
+                this._frontFaceRS = context.createRenderState(appearance.renderState);
+            }
         }
 
         if (createSP) {
@@ -694,12 +683,10 @@ define([
             var vs = createColumbusViewShader(this, appearance.vertexShaderSource);
             vs = appendShow(this, vs);
             var fs = appearance.getFragmentShaderSource();
+            var pickFS = createShaderSource({ sources : [fs], pickColorQualifier : 'varying' });
 
             this._sp = shaderCache.replaceShaderProgram(this._sp, vs, fs, this._attributeIndices);
-            this._pickSP = shaderCache.replaceShaderProgram(this._pickSP,
-                createPickVertexShaderSource(vs),
-                createPickFragmentShaderSource(fs, 'varying'),
-                this._attributeIndices);
+            this._pickSP = shaderCache.replaceShaderProgram(this._pickSP, createPickVertexShaderSource(vs), pickFS, this._attributeIndices);
 
             validateShaderMatching(this._sp, this._attributeIndices);
             validateShaderMatching(this._pickSP, this._attributeIndices);
@@ -708,17 +695,66 @@ define([
         if (createRS || createSP) {
             var uniforms = (defined(material)) ? material._uniforms : undefined;
 
+            if (defined(this._backFaceRS)) {
+                colorCommands.length = this._va.length * 2;
+                pickCommands.length = this._va.length * 2;
+            } else {
+                colorCommands.length = this._va.length;
+                pickCommands.length = this._va.length;
+            }
+
             length = colorCommands.length;
+            var vaIndex = 0;
             for (i = 0; i < length; ++i) {
+                if (defined(this._backFaceRS)) {
+                    colorCommand = colorCommands[i];
+                    if (!defined(colorCommand)) {
+                        colorCommand = colorCommands[i] = new DrawCommand();
+                    }
+                    colorCommand.owner = this;
+                    colorCommand.primitiveType = this._primitiveType;
+                    colorCommand.vertexArray = this._va[vaIndex];
+                    colorCommand.renderState = this._backFaceRS;
+                    colorCommand.shaderProgram = this._sp;
+                    colorCommand.uniformMap = uniforms;
+
+                    pickCommand = pickCommands[i];
+                    if (!defined(pickCommand)) {
+                        pickCommand = pickCommands[i] = new DrawCommand();
+                    }
+                    pickCommand.owner = this;
+                    pickCommand.primitiveType = this._primitiveType;
+                    pickCommand.vertexArray = this._va[vaIndex];
+                    pickCommand.renderState = this._backFaceRS;
+                    pickCommand.shaderProgram = this._pickSP;
+                    pickCommand.uniformMap = uniforms;
+
+                    ++i;
+                }
+
                 colorCommand = colorCommands[i];
-                colorCommand.renderState = this._rs;
+                if (!defined(colorCommand)) {
+                    colorCommand = colorCommands[i] = new DrawCommand();
+                }
+                colorCommand.owner = this;
+                colorCommand.primitiveType = this._primitiveType;
+                colorCommand.vertexArray = this._va[vaIndex];
+                colorCommand.renderState = this._frontFaceRS;
                 colorCommand.shaderProgram = this._sp;
                 colorCommand.uniformMap = uniforms;
 
                 pickCommand = pickCommands[i];
-                pickCommand.renderState = this._rs;
+                if (!defined(pickCommand)) {
+                    pickCommand = pickCommands[i] = new DrawCommand();
+                }
+                pickCommand.owner = this;
+                pickCommand.primitiveType = this._primitiveType;
+                pickCommand.vertexArray = this._va[vaIndex];
+                pickCommand.renderState = this._frontFaceRS;
                 pickCommand.shaderProgram = this._pickSP;
                 pickCommand.uniformMap = uniforms;
+
+                ++vaIndex;
             }
         }
 
@@ -866,7 +902,7 @@ define([
      *
      * @memberof Primitive
      *
-     * @return {Boolean} <code>true</code> if this object was destroyed; otherwise, <code>false</code>.
+     * @returns {Boolean} <code>true</code> if this object was destroyed; otherwise, <code>false</code>.
      *
      * @see Primitive#destroy
      */
@@ -885,7 +921,7 @@ define([
      *
      * @memberof Primitive
      *
-     * @return {undefined}
+     * @returns {undefined}
      *
      * @exception {DeveloperError} This object was destroyed, i.e., destroy() was called.
      *

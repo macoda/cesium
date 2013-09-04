@@ -15,7 +15,7 @@ define([
         '../Renderer/BufferUsage',
         '../Renderer/CommandLists',
         '../Renderer/DrawCommand',
-        '../Renderer/createPickFragmentShaderSource',
+        '../Renderer/createShaderSource',
         './Material',
         './SceneMode',
         '../Shaders/EllipsoidVS',
@@ -36,7 +36,7 @@ define([
         BufferUsage,
         CommandLists,
         DrawCommand,
-        createPickFragmentShaderSource,
+        createShaderSource,
         Material,
         SceneMode,
         EllipsoidVS,
@@ -283,11 +283,7 @@ define([
 
             // Recompile shader when material changes
             if (materialChanged) {
-                var colorFS =
-                    '#line 0\n' +
-                    this.material.shaderSource +
-                    '#line 0\n' +
-                    EllipsoidFS;
+                var colorFS = createShaderSource({ sources : [this.material.shaderSource, EllipsoidFS] });
 
                 this._sp = context.getShaderCache().replaceShaderProgram(this._sp, EllipsoidVS, colorFS, attributeIndices);
 
@@ -314,11 +310,10 @@ define([
 
             // Recompile shader when material changes
             if (materialChanged || !defined(this._pickSP)) {
-                var pickFS = createPickFragmentShaderSource(
-                    '#line 0\n' +
-                    this.material.shaderSource +
-                    '#line 0\n' +
-                    EllipsoidFS, 'uniform');
+                var pickFS = createShaderSource({
+                    sources : [this.material.shaderSource, EllipsoidFS],
+                    pickColorQualifier : 'uniform'
+                });
 
                 this._pickSP = context.getShaderCache().replaceShaderProgram(this._pickSP, EllipsoidVS, pickFS, attributeIndices);
 
@@ -347,7 +342,7 @@ define([
      *
      * @memberof EllipsoidPrimitive
      *
-     * @return {Boolean} <code>true</code> if this object was destroyed; otherwise, <code>false</code>.
+     * @returns {Boolean} <code>true</code> if this object was destroyed; otherwise, <code>false</code>.
      *
      * @see EllipsoidPrimitive#destroy
      */
@@ -365,7 +360,7 @@ define([
      *
      * @memberof EllipsoidPrimitive
      *
-     * @return {undefined}
+     * @returns {undefined}
      *
      * @exception {DeveloperError} This object was destroyed, i.e., destroy() was called.
      *
