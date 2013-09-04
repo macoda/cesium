@@ -1,6 +1,10 @@
 /*global defineSuite*/
 defineSuite([
          'Core/Color',
+         'Core/Cartesian3',
+         'Core/BoundingSphere',
+         'Renderer/DrawCommand',
+         'Renderer/CommandLists',
          'Renderer/Context',
          'Renderer/UniformState',
          'Scene/AnimationCollection',
@@ -12,6 +16,10 @@ defineSuite([
          'Specs/destroyScene'
      ], 'Scene/Scene', function(
          Color,
+         Cartesian3,
+         BoundingSphere,
+         DrawCommand,
+         CommandLists,
          Context,
          UniformState,
          AnimationCollection,
@@ -35,16 +43,12 @@ defineSuite([
         expect(scene.getFrameState()).toBeInstanceOf(FrameState);
         expect(scene.getAnimations()).toBeInstanceOf(AnimationCollection);
 
-        var defaultContextOptions = {
-            alpha : false,
-            depth : true,
-            stencil : false,
-            antialias : true,
-            premultipliedAlpha : true,
-            preserveDrawingBuffer : false
-        };
         var contextAttributes = scene.getContext()._gl.getContextAttributes();
-        expect(contextAttributes).toEqual(defaultContextOptions);
+        // Do not check depth and antialias since they are requests not requirements
+        expect(contextAttributes.alpha).toEqual(false);
+        expect(contextAttributes.stencil).toEqual(false);
+        expect(contextAttributes.premultipliedAlpha).toEqual(true);
+        expect(contextAttributes.preserveDrawingBuffer).toEqual(false);
 
         destroyScene(scene);
     });
@@ -75,6 +79,69 @@ defineSuite([
         scene.initializeFrame();
         scene.render();
         expect(scene.getContext().readPixels()).toEqual([0, 0, 255, 255]);
+        destroyScene(scene);
+    });
+
+    function getMockPrimitive(command) {
+        return {
+            update : function(context, frameState, commandList) {
+                var commandLists = new CommandLists();
+                commandLists.colorList.push(command);
+                commandList.push(commandLists);
+            },
+            destroy : function() {
+            }
+        };
+    }
+
+    it('debugCommandFilter filters commands', function() {
+        var c = new DrawCommand();
+        c.execute = function() {};
+        spyOn(c, 'execute');
+
+        var scene = createScene();
+        scene.getPrimitives().add(getMockPrimitive(c));
+
+        scene.debugCommandFilter = function(command) {
+            return command !== c;   // Do not execute command
+        };
+
+        scene.initializeFrame();
+        scene.render();
+        expect(c.execute).not.toHaveBeenCalled();
+
+        destroyScene(scene);
+    });
+
+    it('debugCommandFilter does not filter commands', function() {
+        var c = new DrawCommand();
+        c.execute = function() {};
+        spyOn(c, 'execute');
+
+        var scene = createScene();
+        scene.getPrimitives().add(getMockPrimitive(c));
+
+        expect(scene.debugCommandFilter).toBeUndefined();
+        scene.initializeFrame();
+        scene.render();
+        expect(c.execute).toHaveBeenCalled();
+
+        destroyScene(scene);
+    });
+
+    it('debugShowBoundingVolume draws a bounding sphere', function() {
+        var c = new DrawCommand();
+        c.execute = function() {};
+        c.debugShowBoundingVolume = true;
+        c.boundingVolume = new BoundingSphere(Cartesian3.ZERO, 7000000.0);
+
+        var scene = createScene();
+        scene.getPrimitives().add(getMockPrimitive(c));
+
+        scene.initializeFrame();
+        scene.render();
+        expect(scene.getContext().readPixels()[0]).not.toEqual(0);  // Red bounding sphere
+
         destroyScene(scene);
     });
 

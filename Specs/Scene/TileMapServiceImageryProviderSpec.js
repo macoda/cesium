@@ -1,6 +1,7 @@
 /*global defineSuite*/
 defineSuite([
          'Scene/TileMapServiceImageryProvider',
+         'Core/defined',
          'Core/jsonp',
          'Core/loadImage',
          'Core/loadXML',
@@ -16,6 +17,7 @@ defineSuite([
          'ThirdParty/when'
      ], function(
          TileMapServiceImageryProvider,
+         defined,
          jsonp,
          loadImage,
          loadXML,
@@ -130,7 +132,7 @@ defineSuite([
         });
 
         waitsFor(function() {
-            return typeof tile000Image !== 'undefined';
+            return defined(tile000Image);
         }, 'requested tile to be loaded');
 
         runs(function() {
@@ -142,7 +144,7 @@ defineSuite([
         var provider = new TileMapServiceImageryProvider({
             url : 'made/up/tms/server'
         });
-        expect(provider.getLogo()).toBeUndefined();
+        expect(provider.getCredit()).toBeUndefined();
     });
 
     it('turns the supplied credit into a logo', function() {
@@ -150,7 +152,7 @@ defineSuite([
             url : 'made/up/gms/server',
             credit : 'Thanks to our awesome made up source of this imagery!'
         });
-        expect(providerWithCredit.getLogo()).toBeDefined();
+        expect(providerWithCredit.getCredit()).toBeDefined();
     });
 
     it('routes requests through a proxy if one is specified', function() {
@@ -181,7 +183,7 @@ defineSuite([
         });
 
         waitsFor(function() {
-            return typeof tile000Image !== 'undefined';
+            return defined(tile000Image);
         }, 'requested tile to be loaded');
 
         runs(function() {

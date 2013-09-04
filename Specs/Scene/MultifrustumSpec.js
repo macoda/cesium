@@ -2,16 +2,17 @@
 defineSuite([
          'Specs/createScene',
          'Specs/destroyScene',
+         'Core/defined',
          'Core/destroyObject',
          'Core/BoundingSphere',
-         'Core/BoxTessellator',
+         'Core/BoxGeometry',
          'Core/Cartesian2',
          'Core/Cartesian3',
          'Core/Color',
          'Core/defaultValue',
          'Core/Math',
          'Core/Matrix4',
-         'Core/MeshFilters',
+         'Core/GeometryPipeline',
          'Core/PrimitiveType',
          'Renderer/BlendingState',
          'Renderer/BufferUsage',
@@ -23,16 +24,17 @@ defineSuite([
      ], 'Scene/Multifrustum', function(
          createScene,
          destroyScene,
+         defined,
          destroyObject,
          BoundingSphere,
-         BoxTessellator,
+         BoxGeometry,
          Cartesian2,
          Cartesian3,
          Color,
          defaultValue,
          CesiumMath,
          Matrix4,
-         MeshFilters,
+         GeometryPipeline,
          PrimitiveType,
          BlendingState,
          BufferUsage,
@@ -180,6 +182,20 @@ defineSuite([
         expect(context.readPixels()).toEqual([255, 255, 255, 255]);
     });
 
+    it('renders primitive in last frustum with debugShowFrustums', function() {
+        createBillboards();
+        var color = new Color(1.0, 1.0, 1.0, 0.0);
+        billboard0.setColor(color);
+        billboard1.setColor(color);
+
+        scene.debugShowFrustums = true;
+        scene.initializeFrame();
+        scene.render();
+        expect(context.readPixels()).toEqual([0, 0, 255, 255]);
+        expect(scene.debugFrustumStatistics.totalCommands).toEqual(3);
+        expect(scene.debugFrustumStatistics.commandsInFrustums).toEqual({ 1 : 1, 2 : 1, 4 : 1});
+    });
+
     function createPrimitive(bounded, closestFrustum) {
         bounded = defaultValue(bounded, true);
         closestFrustum = defaultValue(closestFrustum, false);
@@ -194,17 +210,17 @@ defineSuite([
 
             var that = this;
             this._um = {
-                    u_color : function() {
-                        return that.color;
-                    },
-                    u_model : function() {
-                        return that._modelMatrix;
-                    }
+                u_color : function() {
+                    return that.color;
+                },
+                u_model : function() {
+                    return that._modelMatrix;
+                }
             };
         };
 
         Primitive.prototype.update = function(context, frameState, commandLists) {
-            if (typeof this._sp === 'undefined') {
+            if (!defined(this._sp)) {
                 var vs = '';
                 vs += 'attribute vec4 position;';
                 vs += 'void main()';
@@ -222,13 +238,13 @@ defineSuite([
                 var dimensions = new Cartesian3(500000.0, 500000.0, 500000.0);
                 var maximumCorner = dimensions.multiplyByScalar(0.5);
                 var minimumCorner = maximumCorner.negate();
-                var mesh = BoxTessellator.compute({
+                var geometry = BoxGeometry.createGeometry(new BoxGeometry({
                     minimumCorner: minimumCorner,
                     maximumCorner: maximumCorner
-                });
-                var attributeIndices = MeshFilters.createAttributeIndices(mesh);
-                this._va = context.createVertexArrayFromMesh({
-                    mesh: mesh,
+                }));
+                var attributeIndices = GeometryPipeline.createAttributeIndices(geometry);
+                this._va = context.createVertexArrayFromGeometry({
+                    geometry: geometry,
                     attributeIndices: attributeIndices,
                     bufferUsage: BufferUsage.STATIC_DRAW
                 });
