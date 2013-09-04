@@ -1,19 +1,20 @@
 /*global defineSuite*/
-defineSuite(['DynamicScene/GeoJsonDataSource',
-             'DynamicScene/DynamicObjectCollection',
-             'Core/Cartographic',
-             'Core/Cartesian3',
-             'Core/Ellipsoid',
-             'Core/Event',
-             'ThirdParty/when'
-            ], function(
-                    GeoJsonDataSource,
-                    DynamicObjectCollection,
-                    Cartographic,
-                    Cartesian3,
-                    Ellipsoid,
-                    Event,
-                    when) {
+defineSuite([
+        'DynamicScene/GeoJsonDataSource',
+        'DynamicScene/DynamicObjectCollection',
+        'Core/Cartographic',
+        'Core/Cartesian3',
+        'Core/Ellipsoid',
+        'Core/Event',
+        'ThirdParty/when'
+    ], function(
+        GeoJsonDataSource,
+        DynamicObjectCollection,
+        Cartographic,
+        Cartesian3,
+        Ellipsoid,
+        Event,
+        when) {
     "use strict";
     /*global jasmine,describe,xdescribe,it,xit,expect,beforeEach,afterEach,beforeAll,afterAll,spyOn,runs,waits,waitsFor*/
 
@@ -32,7 +33,7 @@ defineSuite(['DynamicScene/GeoJsonDataSource',
     function multiLineToCartesian(geometry) {
         var coordinates = geometry.coordinates;
         var result = [];
-        for (var i = 0; i < coordinates.length; i++) {
+        for ( var i = 0; i < coordinates.length; i++) {
             result.push(coordinatesArrayToCartesian(coordinates[i]));
         }
         return result;
@@ -44,7 +45,7 @@ defineSuite(['DynamicScene/GeoJsonDataSource',
 
     function multiPolygonCoordinatesToCartesian(coordinates) {
         var result = [];
-        for (var i = 0; i < coordinates.length; i++) {
+        for ( var i = 0; i < coordinates.length; i++) {
             result.push(coordinatesArrayToCartesian(coordinates[i][0]));
         }
         return result;
@@ -56,15 +57,15 @@ defineSuite(['DynamicScene/GeoJsonDataSource',
     };
 
     var pointNamedCrs = {
-            type : 'Point',
-            coordinates : [102.0, 0.5],
-            crs : {
-                type : 'name',
-                properties : {
-                    name : 'EPSG:4326'
-                }
+        type : 'Point',
+        coordinates : [102.0, 0.5],
+        crs : {
+            type : 'name',
+            properties : {
+                name : 'EPSG:4326'
             }
-        };
+        }
+    };
 
     var pointCrsLinkHref = {
         type : 'Point',
@@ -116,8 +117,8 @@ defineSuite(['DynamicScene/GeoJsonDataSource',
     var multiPolygon = {
         type : 'MultiPolygon',
         coordinates : [[[[102.0, 2.0], [103.0, 2.0], [103.0, 3.0], [102.0, 3.0], [102.0, 2.0]]],
-                         [[[100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0]],
-                          [[100.2, 0.2], [100.8, 0.2], [100.8, 0.8], [100.2, 0.8], [100.2, 0.2]]]]
+                       [[[100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0]],
+                        [[100.2, 0.2], [100.8, 0.2], [100.8, 0.8], [100.2, 0.8], [100.2, 0.2]]]]
     };
 
     var geometryCollection = {
@@ -227,7 +228,7 @@ defineSuite(['DynamicScene/GeoJsonDataSource',
         runs(function() {
             var pointObject = dynamicObjectCollection.getObjects()[0];
             expect(pointObject.geoJson).toBe(feature);
-            expect(pointObject.position.getValueCartesian()).toEqual(coordinatesToCartesian(feature.geometry.coordinates));
+            expect(pointObject.position.getValue()).toEqual(coordinatesToCartesian(feature.geometry.coordinates));
             expect(pointObject.point).toBeDefined();
         });
     });
@@ -259,7 +260,7 @@ defineSuite(['DynamicScene/GeoJsonDataSource',
         runs(function() {
             var pointObject = dynamicObjectCollection.getObjects()[0];
             expect(pointObject.geoJson).toBe(point);
-            expect(pointObject.position.getValueCartesian()).toEqual(coordinatesToCartesian(point.coordinates));
+            expect(pointObject.position.getValue()).toEqual(coordinatesToCartesian(point.coordinates));
             expect(pointObject.point).toBeDefined();
         });
     });
@@ -278,7 +279,7 @@ defineSuite(['DynamicScene/GeoJsonDataSource',
             for ( var i = 0; i < multiPoint.coordinates.length; i++) {
                 var object = objects[i];
                 expect(object.geoJson).toBe(multiPoint);
-                expect(object.position.getValueCartesian()).toEqual(expectedPositions[i]);
+                expect(object.position.getValue()).toEqual(expectedPositions[i]);
                 expect(object.point).toBeDefined();
             }
         });
@@ -295,7 +296,7 @@ defineSuite(['DynamicScene/GeoJsonDataSource',
         runs(function() {
             var object = dynamicObjectCollection.getObjects()[0];
             expect(object.geoJson).toBe(lineString);
-            expect(object.vertexPositions.getValueCartesian()).toEqual(coordinatesArrayToCartesian(lineString.coordinates));
+            expect(object.vertexPositions.getValue()).toEqual(coordinatesArrayToCartesian(lineString.coordinates));
             expect(object.polyline).toBeDefined();
         });
     });
@@ -314,7 +315,7 @@ defineSuite(['DynamicScene/GeoJsonDataSource',
             for ( var i = 0; i < multiLineString.coordinates.length; i++) {
                 var object = objects[i];
                 expect(object.geoJson).toBe(multiLineString);
-                expect(object.vertexPositions.getValueCartesian()).toEqual(lines[i]);
+                expect(object.vertexPositions.getValue()).toEqual(lines[i]);
                 expect(object.polyline).toBeDefined();
             }
         });
@@ -331,7 +332,7 @@ defineSuite(['DynamicScene/GeoJsonDataSource',
         runs(function() {
             var object = dynamicObjectCollection.getObjects()[0];
             expect(object.geoJson).toBe(polygon);
-            expect(object.vertexPositions.getValueCartesian()).toEqual(polygonCoordinatesToCartesian(polygon.coordinates));
+            expect(object.vertexPositions.getValue()).toEqual(polygonCoordinatesToCartesian(polygon.coordinates));
             expect(object.polyline).toBeDefined();
             expect(object.polygon).toBeDefined();
         });
@@ -348,7 +349,7 @@ defineSuite(['DynamicScene/GeoJsonDataSource',
         runs(function() {
             var object = dynamicObjectCollection.getObjects()[0];
             expect(object.geoJson).toBe(polygonWithHoles);
-            expect(object.vertexPositions.getValueCartesian()).toEqual(polygonCoordinatesToCartesian(polygonWithHoles.coordinates));
+            expect(object.vertexPositions.getValue()).toEqual(polygonCoordinatesToCartesian(polygonWithHoles.coordinates));
             expect(object.polyline).toBeDefined();
             expect(object.polygon).toBeDefined();
         });
@@ -368,7 +369,7 @@ defineSuite(['DynamicScene/GeoJsonDataSource',
             for ( var i = 0; i < multiPolygon.coordinates.length; i++) {
                 var object = objects[i];
                 expect(object.geoJson).toBe(multiPolygon);
-                expect(object.vertexPositions.getValueCartesian()).toEqual(positions[i]);
+                expect(object.vertexPositions.getValue()).toEqual(positions[i]);
                 expect(object.polyline).toBeDefined();
                 expect(object.polygon).toBeDefined();
             }
@@ -409,12 +410,12 @@ defineSuite(['DynamicScene/GeoJsonDataSource',
         runs(function() {
             var object = dynamicObjectCollection.getObjects()[0];
             expect(object.geoJson).toBe(geometryCollection);
-            expect(object.position.getValueCartesian()).toEqual(coordinatesToCartesian(geometryCollection.geometries[0].coordinates));
+            expect(object.position.getValue()).toEqual(coordinatesToCartesian(geometryCollection.geometries[0].coordinates));
             expect(object.point).toBeDefined();
 
             object = dynamicObjectCollection.getObjects()[1];
             expect(object.geoJson).toBe(geometryCollection);
-            expect(object.vertexPositions.getValueCartesian()).toEqual(coordinatesArrayToCartesian(geometryCollection.geometries[1].coordinates));
+            expect(object.vertexPositions.getValue()).toEqual(coordinatesArrayToCartesian(geometryCollection.geometries[1].coordinates));
             expect(object.polyline).toBeDefined();
         });
     });
@@ -429,7 +430,7 @@ defineSuite(['DynamicScene/GeoJsonDataSource',
         });
         runs(function() {
             var pointObject = dynamicObjectCollection.getObjects()[0];
-            expect(pointObject.position.getValueCartesian()).toEqual(coordinatesToCartesian(point.coordinates));
+            expect(pointObject.position.getValue()).toEqual(coordinatesToCartesian(point.coordinates));
         });
     });
 
@@ -454,7 +455,7 @@ defineSuite(['DynamicScene/GeoJsonDataSource',
         });
         runs(function() {
             var pointObject = dynamicObjectCollection.getObjects()[0];
-            expect(pointObject.position.getValueCartesian()).toEqual(projectedPosition);
+            expect(pointObject.position.getValue()).toEqual(projectedPosition);
         });
     });
 
@@ -468,7 +469,7 @@ defineSuite(['DynamicScene/GeoJsonDataSource',
         });
         runs(function() {
             var pointObject = dynamicObjectCollection.getObjects()[0];
-            expect(pointObject.position.getValueCartesian()).toEqual(coordinatesToCartesian(point.coordinates));
+            expect(pointObject.position.getValue()).toEqual(coordinatesToCartesian(point.coordinates));
         });
     });
 
@@ -632,5 +633,28 @@ defineSuite(['DynamicScene/GeoJsonDataSource',
         expect(function() {
             dataSource.load(featureWithUnknownCrsType);
         }).toThrow();
+    });
+
+    it('raises error when an error occurs in loadUrl', function() {
+        var dataSource = new GeoJsonDataSource();
+
+        var spy = jasmine.createSpy('errorEvent');
+        dataSource.getErrorEvent().addEventListener(spy);
+
+        var promise = dataSource.loadUrl('Data/Images/Blue.png'); //not JSON
+
+        var resolveSpy = jasmine.createSpy('resolve');
+        var rejectSpy = jasmine.createSpy('reject');
+        when(promise, resolveSpy, rejectSpy);
+
+        waitsFor(function() {
+            return rejectSpy.wasCalled;
+        });
+
+        runs(function() {
+            expect(spy).toHaveBeenCalledWith(dataSource, jasmine.any(Error));
+            expect(rejectSpy).toHaveBeenCalledWith(jasmine.any(Error));
+            expect(resolveSpy).not.toHaveBeenCalled();
+        });
     });
 });
