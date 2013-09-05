@@ -258,7 +258,7 @@ Either specify options.imageryProvider instead or set options.baseLayerPicker to
             var navigationContainer = document.createElement('div');
             navigationContainer.className = 'cesium-viewer-navigationContainer';
             viewerContainer.appendChild(navigationContainer);
-            navigation = new Navigation(navigationContainer, new NavigationViewModel(cesiumWidget.scene.getCamera().controller));
+            navigation = new Navigation(navigationContainer, new NavigationViewModel(cesiumWidget.canvas, cesiumWidget.scene.getCamera().controller));
         }
 
         //Timeline
