@@ -197,6 +197,26 @@ define([
         object._cameraController.zoomIn(distance);
     }
 
+    function zoom2D(object) {
+        handleZoom(object, object._zoomFactor, object._cameraController.getMagnitude());
+    }
+
+    var zoomCVWindowPos = new Cartesian2();
+    var zoomCVWindowRay = new Ray();
+    function zoomCV(object) {
+        var windowPosition = zoomCVWindowPos;
+        windowPosition.x = object._canvas.clientWidth / 2;
+        windowPosition.y = object._canvas.clientHeight / 2;
+        var ray = object._cameraController.getPickRay(windowPosition, zoomCVWindowRay);
+        var normal = Cartesian3.UNIT_X;
+
+        var position = ray.origin;
+        var direction = ray.direction;
+        var scalar = -normal.dot(position) / normal.dot(direction);
+
+        handleZoom(object, object._zoomFactor, scalar);
+    }
+
     var rotate3DRestrictedDirection = Cartesian4.ZERO.clone();
     function rotate3D(object, transform, constrainedAxis, restrictedAngle) {
         var cameraController = object._cameraController;
@@ -321,11 +341,11 @@ define([
     }
 
     function update2D(object) {
-
+        zoom2D(object);
     }
 
     function updateCV(object) {
-
+        zoomCV(object);
     }
 
     function update3D(object) {
