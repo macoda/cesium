@@ -58,6 +58,15 @@ define([
         this._cameraController = cameraController;
         this._ellipsoid = Ellipsoid.WGS84;
 
+        this.enableTranslate = true;
+        this.enableZoom = true;
+        this.enableRotate = true;
+        this.enableTilt = true;
+        this.enableLook = true;
+        this.inertiaSpin = 0.9;
+        this.inertiaTranslate = 0.9;
+        this.inertiaZoom = 0.8;
+
         this.maximumMovementRatio = 0.1;
         this.minimumZoomDistance = 20.0;
         this.maximumZoomDistance = Number.POSITIVE_INFINITY;
@@ -272,10 +281,13 @@ define([
         } else {
             var deltaPhi = 0;
             var deltaTheta = 0;
+            var rho = cameraController._camera.position.magnitude();
             if (magnitude > 5) {
                 deltaPhi = magnitude * Math.cos(angle) / 1000;
                 deltaTheta = magnitude * Math.sin(angle) / 1000;
             }
+            deltaPhi *= object._rotateFactor * (rho - object._rotateRateAdjustment);
+            deltaTheta *= object._rotateFactor * (rho - object._rotateRateAdjustment);
 
             cameraController.rotateRight(deltaPhi);
             cameraController.rotateUp(deltaTheta);
@@ -341,17 +353,47 @@ define([
     }
 
     function update2D(object) {
-        zoom2D(object);
+        var zooming = object.zoomRingDragging;
+
+        if (object.enableZoom) {
+            if (zooming) {
+                zoom2D(object);
+            }
+        }
     }
 
     function updateCV(object) {
-        zoomCV(object);
+        var zooming = object.zoomRingDragging;
+
+        if (object.enableZoom) {
+            if (zooming) {
+                zoomCV(object);
+            }
+        }
     }
 
     function update3D(object) {
-        zoom3D(object);
-        pan3D(object);
-        tilt3D(object);
+        var zooming = object.zoomRingDragging;
+        var translating = object.panJoystickDragging;
+        var tilting = object.tiltRingDragging;
+
+        if (object.enableZoom) {
+            if (zooming) {
+                zoom3D(object);
+            }
+        }
+
+        if (object.enableTranslate) {
+            if (translating) {
+                pan3D(object);
+            }
+        }
+
+        if (object.enableTilt) {
+            if (tilting) {
+                tilt3D(object);
+            }
+        }
     }
 
     function resetPointers(object) {
