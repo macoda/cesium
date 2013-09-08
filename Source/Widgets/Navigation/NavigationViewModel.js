@@ -206,8 +206,73 @@ define([
         object._cameraController.zoomIn(distance);
     }
 
+    var move2DStartPos = new Cartesian2();
+    var move2DEndPos = new Cartesian2();
+    var translate2DStartRay = new Ray();
+    var translate2DEndRay = new Ray();
+    function pan2D(object) {
+        var cameraController = object._cameraController;
+        var magnitude = object._pointerDistance;
+        var angle = CesiumMath.TWO_PI * object._pointerDirection / 360;
+
+        if (magnitude > 5) {
+            move2DStartPos.x = magnitude * Math.cos(angle) / 10;
+            move2DStartPos.y = magnitude * Math.sin(angle) / 10;
+        }
+
+        var start = cameraController.getPickRay(move2DStartPos, translate2DStartRay).origin;
+        var end = cameraController.getPickRay(move2DEndPos, translate2DEndRay).origin;
+
+        cameraController.moveRight(start.x - end.x);
+        cameraController.moveUp(start.y - end.y);
+    }
+
     function zoom2D(object) {
         handleZoom(object, object._zoomFactor, object._cameraController.getMagnitude());
+    }
+
+    var directionCV = new Cartesian3();
+    var moveCVStartPos = new Cartesian2();
+    var moveCVEndPos = new Cartesian2();
+    var translateCVStartRay = new Ray();
+    var translateCVEndRay = new Ray();
+    var translateCVStartPos = new Cartesian3();
+    var translateCVEndPos = new Cartesian3();
+    var translatCVDifference = new Cartesian3();
+    function panCV(object) {
+        var cameraController = object._cameraController;
+        var magnitude = object._pointerDistance;
+        var angle = CesiumMath.TWO_PI * object._pointerDirection / 360;
+
+        if (magnitude > 5) {
+            moveCVStartPos.x = magnitude * Math.cos(angle) / 10;
+            moveCVStartPos.y = magnitude * Math.sin(angle) / 10;
+            directionCV.x = magnitude * Math.cos(angle);
+            directionCV.y = -magnitude * Math.sin(angle);
+        }
+
+        var startRay = cameraController.getPickRay(moveCVStartPos, translateCVStartRay);
+        var endRay = cameraController.getPickRay(moveCVEndPos, translateCVEndRay);
+        var normal = Cartesian3.UNIT_X;
+
+        var position = startRay.origin;
+        var direction = startRay.direction;
+        var scalar = -normal.dot(position) / normal.dot(direction);
+        var startPlanePos = Cartesian3.multiplyByScalar(direction, scalar, translateCVStartPos);
+        Cartesian3.add(position, startPlanePos, startPlanePos);
+
+        position = endRay.origin;
+        direction = endRay.direction;
+        scalar = -normal.dot(position) / normal.dot(direction);
+        var endPlanePos = Cartesian3.multiplyByScalar(direction, scalar, translateCVEndPos);
+        Cartesian3.add(position, endPlanePos, endPlanePos);
+
+        var diff = Cartesian3.subtract(startPlanePos, endPlanePos, translatCVDifference);
+        var mag = diff.magnitude() / 100;
+
+        if (mag > CesiumMath.EPSILON6) {
+            cameraController.move(directionCV, mag);
+        }
     }
 
     var zoomCVWindowPos = new Cartesian2();
@@ -354,20 +419,34 @@ define([
 
     function update2D(object) {
         var zooming = object.zoomRingDragging;
+        var translating = object.panJoystickDragging;
 
         if (object.enableZoom) {
             if (zooming) {
                 zoom2D(object);
             }
         }
+
+        if (object.enableTranslate) {
+            if (translating) {
+                pan2D(object);
+            }
+        }
     }
 
     function updateCV(object) {
         var zooming = object.zoomRingDragging;
+        var translating = object.panJoystickDragging;
 
         if (object.enableZoom) {
             if (zooming) {
                 zoomCV(object);
+            }
+        }
+
+        if (object.enableTranslate) {
+            if (translating) {
+                panCV(object);
             }
         }
     }
