@@ -85,6 +85,16 @@ define([
         return svgFromObject(button);
     }
 
+    function arrowButton(x, y, angle, path) {
+        var arrow = {
+            tagName : 'use',
+            transform : 'translate(' + x + ',' + y + ') rotate(' + angle + ')',
+            'class' : 'cesium-navigation-arrow',
+            'xlink:href' : path
+        };
+        return svgFromObject(arrow);
+    }
+
     function getDragging(widget) {
         var viewModel = widget._viewModel;
         if (pointerDragged === widget._zoomRingPointer) {
@@ -308,9 +318,21 @@ define([
 
         this._panG.appendChild(this._panJoystick);
 
+        var arrowCenterRadius = 20;
+        var arrowsG = document.createElementNS(svgNS, 'g');
+        var upArrow = arrowButton(0, -arrowCenterRadius, 180, '#navigation_pathArrow');
+        var rightArrow = arrowButton(arrowCenterRadius, 0, -90, '#navigation_pathArrow');
+        var downArrow = arrowButton(0, arrowCenterRadius, 0, '#navigation_pathArrow');
+        var leftArrow = arrowButton(-arrowCenterRadius, 0, 90, '#navigation_pathArrow');
+        arrowsG.appendChild(upArrow);
+        arrowsG.appendChild(rightArrow);
+        arrowsG.appendChild(downArrow);
+        arrowsG.appendChild(leftArrow);
+
         knobG.appendChild(knobOuter);
         knobG.appendChild(knobInner);
         knobG.appendChild(knobShield);
+        knobG.appendChild(arrowsG);
         knobG.appendChild(this._panG);
 
         topG.appendChild(zoomRingG);
@@ -462,6 +484,10 @@ define([
                id : 'navigation_pathRect',
                tagName : 'path',
                d : 'M-5,-7,-5,7,5,7,5,-7,-5,-7Z'
+           }, {
+               id : 'navigation_pathArrow',
+               tagName : 'path',
+               d : 'M-8,0,0,10,8,0,-8,0Z'
            }]
         });
 

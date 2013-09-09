@@ -72,3 +72,11 @@
     cursor: pointer;
     fill: #4E78A0;
 }
+
+.cesium-navigation-arrow {
+    cursor: pointer;
+    fill: #434343;
+    stroke: #434343;
+    stroke-linejoin: round;
+    stroke-width: 2;
+}
