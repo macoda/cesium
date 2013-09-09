@@ -416,6 +416,17 @@ Either specify options.imageryProvider instead or set options.baseLayerPicker to
         },
 
         /**
+         * Gets the Navigation widget.
+         * @memberof Viewer.prototype
+         * @type {Navigation}
+         */
+        navigation : {
+            get : function() {
+                return this._navigation;
+            }
+        },
+
+        /**
          * Gets the Timeline widget.
          * @memberof Viewer.prototype
          * @type {Timeline}
