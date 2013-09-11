@@ -4,6 +4,7 @@ define([
         '../../Core/defined',
         '../../Core/DeveloperError',
         '../../Core/defineProperties',
+        '../../Core/Ellipsoid',
         '../../Core/EventHelper',
         '../../Core/ScreenSpaceEventType',
         '../../Core/wrapFunction',
@@ -14,6 +15,7 @@ define([
         defined,
         DeveloperError,
         defineProperties,
+        Ellipsoid,
         EventHelper,
         ScreenSpaceEventType,
         wrapFunction,
@@ -97,15 +99,18 @@ define([
                     if (trackedObject !== value) {
                         trackedObject = value;
                         dynamicObjectView = defined(value) ? new DynamicObjectView(value, viewer.scene, viewer.centralBody.getEllipsoid()) : undefined;
+                        viewer.navigation.viewModel.setEllipsoid(defined(value) ? Ellipsoid.UNIT_SPHERE : Ellipsoid.WGS84);
                     }
                     var sceneMode = viewer.scene.getFrameState().mode;
 
                     if (sceneMode === SceneMode.COLUMBUS_VIEW || sceneMode === SceneMode.SCENE2D) {
                         viewer.scene.getScreenSpaceCameraController().enableTranslate = !defined(value);
+                        viewer.navigation.viewModel.enableTranslate = !defined(value);
                     }
 
                     if (sceneMode === SceneMode.COLUMBUS_VIEW || sceneMode === SceneMode.SCENE3D) {
                         viewer.scene.getScreenSpaceCameraController().enableTilt = !defined(value);
+                        viewer.navigation.viewModel.enableTilt = !defined(value);
                     }
                 }
             }

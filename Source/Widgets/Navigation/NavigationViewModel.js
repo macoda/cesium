@@ -337,26 +337,25 @@ define([
 
     function pan3D(object) {
         var cameraController = object._cameraController;
-
+        var ellipsoid = object._ellipsoid;
         var magnitude = object._pointerDistance;
         var angle = CesiumMath.TWO_PI * object._pointerDirection / 360;
 
-        if (!defined(cameraController.constrainedAxis)) {
-            // CAMERA TODO: implement for constrainedAxis
-        } else {
-            var deltaPhi = 0;
-            var deltaTheta = 0;
-            var rho = cameraController._camera.position.magnitude();
-            if (magnitude > 5) {
-                deltaPhi = magnitude * Math.cos(angle) / 1000;
-                deltaTheta = magnitude * Math.sin(angle) / 1000;
-            }
+        var deltaPhi = 0;
+        var deltaTheta = 0;
+        var rho = cameraController._camera.position.magnitude();
+        if (magnitude > 5) {
+            deltaPhi = magnitude * Math.cos(angle) / 1000;
+            deltaTheta = magnitude * Math.sin(angle) / 1000;
+        }
+
+        if (ellipsoid === Ellipsoid.WGS84) {
             deltaPhi *= object._rotateFactor * (rho - object._rotateRateAdjustment);
             deltaTheta *= object._rotateFactor * (rho - object._rotateRateAdjustment);
-
-            cameraController.rotateRight(deltaPhi);
-            cameraController.rotateUp(deltaTheta);
         }
+
+        cameraController.rotateRight(deltaPhi);
+        cameraController.rotateUp(deltaTheta);
     }
 
     var zoom3DUnitPosition = new Cartesian3();
@@ -500,6 +499,10 @@ define([
             }
         }
     }
+
+    NavigationViewModel.prototype.getEllipsoid = function() {
+        return this._ellipsoid;
+    };
 
     NavigationViewModel.prototype.setEllipsoid = function(ellipsoid) {
         ellipsoid = ellipsoid || Ellipsoid.WGS84;
