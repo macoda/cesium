@@ -252,9 +252,10 @@ define([
     }
 
     function unwrapInterval(type, czmlInterval, sourceUri) {
+        /*jshint sub:true*/
         switch (type) {
         case Boolean:
-            return defaultValue(czmlInterval.boolean, czmlInterval);
+            return defaultValue(czmlInterval['boolean'], czmlInterval);
         case Cartesian2:
             return czmlInterval.cartesian2;
         case Cartesian3:
@@ -268,9 +269,9 @@ define([
         case LabelStyle:
             return LabelStyle[defaultValue(czmlInterval.labelStyle, czmlInterval)];
         case Number:
-            return defaultValue(czmlInterval.number, czmlInterval);
+            return defaultValue(czmlInterval['number'], czmlInterval);
         case String:
-            return defaultValue(czmlInterval.string, czmlInterval);
+            return defaultValue(czmlInterval['string'], czmlInterval);
         case Quaternion:
             return czmlInterval.unitQuaternion;
         case VerticalOrigin:
@@ -335,7 +336,12 @@ define([
                 object[propertyName] = property;
                 propertyCreated = true;
             }
-            property.addSamplesPackedArray(unwrappedInterval, JulianDate.fromIso8601(packetData.epoch));
+            var epoch;
+            var packetEpoch = packetData.epoch;
+            if (defined(packetEpoch)) {
+                epoch = JulianDate.fromIso8601(packetEpoch);
+            }
+            property.addSamplesPackedArray(unwrappedInterval, epoch);
             updateInterpolationSettings(packetData, property);
             return propertyCreated;
         }
@@ -474,12 +480,17 @@ define([
         //Without an interval, any sampled value is infinite, meaning it completely
         //replaces any non-sampled property that may exist.
         if (isSampled && !hasInterval) {
-            if (!(property instanceof SampledProperty) || property.referenceFrame !== referenceFrame) {
+            if (!(property instanceof SampledPositionProperty) || property.referenceFrame !== referenceFrame) {
                 property = new SampledPositionProperty(referenceFrame);
                 object[propertyName] = property;
                 propertyCreated = true;
             }
-            property.addSamplesPackedArray(unwrappedInterval, JulianDate.fromIso8601(packetData.epoch));
+            var epoch;
+            var packetEpoch = packetData.epoch;
+            if (defined(packetEpoch)) {
+                epoch = JulianDate.fromIso8601(packetEpoch);
+            }
+            property.addSamplesPackedArray(unwrappedInterval, epoch);
             updateInterpolationSettings(packetData, property);
             return propertyCreated;
         }
@@ -505,11 +516,11 @@ define([
                 //If we create a collection, or it already existed, use it.
                 property.intervals.addInterval(combinedInterval);
             } else if (property instanceof CompositePositionProperty) {
-                //If the collection was already a CompositeProperty, use it.
+                //If the collection was already a CompositePositionProperty, use it.
                 combinedInterval.data = new ConstantPositionProperty(combinedInterval.data, referenceFrame);
                 property.intervals.addInterval(combinedInterval);
             } else {
-                //Otherwise, create a CompositeProperty but preserve the existing data.
+                //Otherwise, create a CompositePositionProperty but preserve the existing data.
 
                 //Put the old property in an infinite interval.
                 interval = Iso8601.MAXIMUM_INTERVAL.clone();
@@ -523,7 +534,7 @@ define([
                 //add the old property interval
                 property.intervals.addInterval(interval);
 
-                //Change the new data to a ConstantProperty and add it.
+                //Change the new data to a ConstantPositionProperty and add it.
                 combinedInterval.data = new ConstantPositionProperty(combinedInterval.data, referenceFrame);
                 property.intervals.addInterval(combinedInterval);
             }
@@ -555,7 +566,7 @@ define([
         var intervals = property.intervals;
         interval = intervals.findInterval(combinedInterval.start, combinedInterval.stop, combinedInterval.isStartIncluded, combinedInterval.isStopIncluded);
         if (!defined(interval) || !(interval.data instanceof SampledPositionProperty) || interval.data.referenceFrame !== referenceFrame) {
-            //If not, create a SampledProperty for it.
+            //If not, create a SampledPositionProperty for it.
             interval = combinedInterval.clone();
             interval.data = new SampledPositionProperty(referenceFrame);
             intervals.addInterval(interval);
