@@ -118,6 +118,7 @@ define([
                 return this._northRingAngle;
             },
             set : function (angle) {
+                this._cameraController.heading = CesiumMath.RADIANS_PER_DEGREE * angle;
                 this._northRingAngle = angle;
             }
         });
@@ -213,7 +214,7 @@ define([
     function pan2D(object) {
         var cameraController = object._cameraController;
         var magnitude = object._pointerDistance;
-        var angle = CesiumMath.TWO_PI * object._pointerDirection / 360;
+        var angle = CesiumMath.RADIANS_PER_DEGREE * object._pointerDirection;
 
         if (magnitude > 5) {
             move2DStartPos.x = magnitude * Math.cos(angle) / 10;
@@ -242,7 +243,7 @@ define([
     function panCV(object) {
         var cameraController = object._cameraController;
         var magnitude = object._pointerDistance;
-        var angle = CesiumMath.TWO_PI * object._pointerDirection / 360;
+        var angle = CesiumMath.RADIANS_PER_DEGREE * (object._pointerDirection - object._northRingAngle);
 
         if (magnitude > 5) {
             moveCVStartPos.x = magnitude * Math.cos(angle) / 10;
@@ -320,7 +321,7 @@ define([
         cameraController.rotateUp(deltaTheta, transform);
 
         if (defined(restrictedAngle)) {
-            var direction = Cartesian3.clone(cameraController._camera.getDirectionWC(), rotate3DRestrictedDirection);
+            var direction = Cartesian3.clone(cameraController._camera.directionWC, rotate3DRestrictedDirection);
             var invTransform = transform.inverseTransformation();
             Matrix4.multiplyByVector(invTransform, direction, direction);
 
@@ -339,7 +340,7 @@ define([
         var cameraController = object._cameraController;
         var ellipsoid = object._ellipsoid;
         var magnitude = object._pointerDistance;
-        var angle = CesiumMath.TWO_PI * object._pointerDirection / 360;
+        var angle = CesiumMath.RADIANS_PER_DEGREE * (object._pointerDirection - object._northRingAngle);
 
         var deltaPhi = 0;
         var deltaTheta = 0;
@@ -498,6 +499,8 @@ define([
                 object.pointerDistance = 0;
             }
         }
+
+        object.northRingAngle = CesiumMath.DEGREES_PER_RADIAN * object._cameraController.heading;
     }
 
     NavigationViewModel.prototype.getEllipsoid = function() {
