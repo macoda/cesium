@@ -108,6 +108,20 @@ define([
         }
     }
 
+    function adjustedAngle(angle, zeroAngle) {
+        angle -= zeroAngle;
+        if (angle > 180) {
+            angle -= 360;
+        }
+
+        if (angle < -90) {
+            angle = -180 - angle;
+        } else if (angle > 90) {
+            angle = 180 - angle;
+        }
+        return angle;
+    }
+
     function setPointerFromMouse(widget, e) {
         var viewModel = widget._viewModel;
         var pointerDragging = getDragging(widget);
@@ -149,7 +163,9 @@ define([
             var angle = Math.atan2(y, x) * 180 / Math.PI;
             var distance = Math.sqrt(x*x + y*y);
             if (pointerDragged === widget._zoomRingPointer) {
-                angle += 180;
+                angle = adjustedAngle(angle, -180);
+            } else if (pointerDragged === widget._tiltRingPointer) {
+                angle = adjustedAngle(angle, 0);
             } else if (pointerDragged === widget._knobOuterN) {
                 angle += 90;
             }
