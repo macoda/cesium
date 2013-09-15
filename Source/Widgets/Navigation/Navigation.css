@@ -8,6 +8,7 @@
 }
 
 .cesium-navigation-blank {
+    cursor: pointer;
     fill: #000;
     fill-opacity: 0.01; /* This must be clickable, so it can't be 'fill: none'. */ 
     stroke: none;
@@ -61,6 +62,7 @@
 }
 
 .cesium-navigation-knobOuter {
+    cursor: pointer;
     fill: #434343;
 }
 
