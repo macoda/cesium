@@ -417,9 +417,13 @@ define([
         object.setEllipsoid(oldEllipsoid);
     }
 
+    function isMoving(value) {
+        return Math.abs(value) > CesiumMath.EPSILON3;
+    }
+
     function update2D(object) {
-        var zooming = object.zoomRingDragging;
-        var translating = object.panJoystickDragging;
+        var zooming = isMoving(object.zoomRingAngle);
+        var translating = isMoving(object.pointerDistance);
 
         if (object.enableZoom) {
             if (zooming) {
@@ -435,8 +439,8 @@ define([
     }
 
     function updateCV(object) {
-        var zooming = object.zoomRingDragging;
-        var translating = object.panJoystickDragging;
+        var zooming = isMoving(object.zoomRingAngle);
+        var translating = isMoving(object.pointerDistance);
 
         if (object.enableZoom) {
             if (zooming) {
@@ -452,9 +456,9 @@ define([
     }
 
     function update3D(object) {
-        var zooming = object.zoomRingDragging;
-        var translating = object.panJoystickDragging;
-        var tilting = object.tiltRingDragging;
+        var zooming = isMoving(object.zoomRingAngle);
+        var translating = isMoving(object.pointerDistance);
+        var tilting = isMoving(object.tiltRingAngle);
 
         if (object.enableZoom) {
             if (zooming) {
@@ -477,7 +481,7 @@ define([
 
     function resetPointers(object) {
         if (!object.zoomRingDragging) {
-            if (Math.abs(object.zoomRingAngle) > CesiumMath.EPSILON3) {
+            if (isMoving(object.zoomRingAngle)) {
                 object.zoomRingAngle *= 0.9;
             } else {
                 object.zoomRingAngle = 0;
@@ -485,7 +489,7 @@ define([
         }
 
         if (!object.tiltRingDragging) {
-            if (Math.abs(object.tiltRingAngle) > CesiumMath.EPSILON3) {
+            if (isMoving(object.tiltRingAngle)) {
                 object.tiltRingAngle *= 0.9;
             } else {
                 object.tiltRingAngle = 0;
@@ -493,7 +497,7 @@ define([
         }
 
         if (!object.panJoystickDragging) {
-            if (Math.abs(object.pointerDistance) > CesiumMath.EPSILON3) {
+            if (isMoving(object.pointerDistance)) {
                 object.pointerDistance *= 0.9;
             } else {
                 object.pointerDistance = 0;
