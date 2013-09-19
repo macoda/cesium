@@ -45,6 +45,17 @@ define([
     var maxTiltRingAngle = 45;
     var maxPointerDistance = 40;
 
+    /**
+     * The view model for the {@link Navigation} widget.
+     * @alias NavigationViewModel
+     * @constructor
+     *
+     * @param {HTMLCanvasElement} canvas The canvas to get location.
+     * @param {CameraController} cameraController The camera controller used to modify the camera.
+     *
+     * @exception {DeveloperError} canvas is required.
+     * @exception {DeveloperError} cameraController is required.
+     */
     var NavigationViewModel = function(canvas, cameraController) {
         if (!defined(canvas)) {
             throw new DeveloperError('canvas is required.');
@@ -58,22 +69,89 @@ define([
         this._cameraController = cameraController;
         this._ellipsoid = Ellipsoid.WGS84;
 
+        /**
+         * If true, allows the user to pan around the map. If false, the camera stays locked at the current position.
+         * @type {Boolean}
+         * @default true
+         */
         this.enableTranslate = true;
+        /**
+         * If true, allows the user to zoom in and out. If false, the camera is locked at the current distance from the ellipsoid.
+         * @type {Boolean}
+         * @default true
+         */
         this.enableZoom = true;
+        //TODO: restrict rotation when false.
+        /**
+         * If true, allows the user to rotate the camera. If false, the camera is locked to the current heading.
+         * This flag only applies in 2D and 3D.
+         * @type {Boolean}
+         * @default true
+         */
         this.enableRotate = true;
+        //TODO: implement tilt for Columbus view.
+        /**
+         * If true, allows the user to tilt the camera. If false, the camera is locked to the current heading.
+         * @type {Boolean}
+         * @default true
+         */
         this.enableTilt = true;
+        //TODO: implement look control.
+        /**
+         * If true, allows the user to use free-look. If false, the camera view direction can only be changed through translating.
+         * or rotating. This flag only applies in 3D and Columbus view modes.
+         * @type {Boolean}
+         * @default true
+         */
         this.enableLook = true;
         this.inertiaSpin = 0.9;
         this.inertiaTranslate = 0.9;
         this.inertiaZoom = 0.8;
 
+        /**
+         * A parameter in the range <code>[0,1)</code> used to limit the range
+         * of various user inputs to a percentage of the window width/height per animation frame.
+         * This helps keep the camera under control in low-frame-rate situations.
+         * @type {Number}
+         * @default 0.1
+         */
         this.maximumMovementRatio = 0.1;
+        /**
+         * The minimum magnitude, in meters, of the camera position when zooming. Defaults to 20.0.
+         * @type {Number}
+         * @default 20.0
+         */
         this.minimumZoomDistance = 20.0;
+        /**
+         * The maximum magnitude, in meters, of the camera position when zooming. Defaults to positive infinity.
+         * @type {Number}
+         * @default {@link Number.POSITIVE_INFINITY}
+         */
         this.maximumZoomDistance = Number.POSITIVE_INFINITY;
 
+        /**
+         * Gets or sets whether the zoom ring is currently being dragged. This property is observable.
+         * @type {Boolean}
+         * @default false
+         */
         this.zoomRingDragging = false;
+        /**
+         * Gets or sets whether the tilt ring is currently being dragged. This property is observable.
+         * @type {Boolean}
+         * @default false
+         */
         this.tiltRingDragging = false;
+        /**
+         * Gets or sets whether the north ring is currently being dragged. This property is observable.
+         * @type {Boolean}
+         * @default false
+         */
         this.northRingDragging = false;
+        /**
+         * Gets or sets whether the pan joystick knob is currently being dragged. This property is observable.
+         * @type {Boolean}
+         * @default false
+         */
         this.panJoystickDragging = false;
 
         var radius = this._ellipsoid.getMaximumRadius();
@@ -93,6 +171,12 @@ define([
 
         knockout.track(this, ['_zoomRingAngle', '_tiltRingAngle', '_northRingAngle', '_pointerDistance', '_pointerDirection']);
 
+        /**
+         * Gets or sets the current zoom ring angle. This property is observable.
+         * @type {Number}
+         * @default undefined
+         */
+        this.zoomRingAngle = undefined;
         knockout.defineProperty(this, 'zoomRingAngle', {
             get : function () {
                 return this._zoomRingAngle;
@@ -103,6 +187,12 @@ define([
             }
         });
 
+        /**
+         * Gets or sets the current tilt ring angle. This property is observable.
+         * @type {Number}
+         * @default undefined
+         */
+        this.tiltRingAngle = undefined;
         knockout.defineProperty(this, 'tiltRingAngle', {
             get : function () {
                 return this._tiltRingAngle;
@@ -113,6 +203,12 @@ define([
             }
         });
 
+        /**
+         * Gets or sets the current north ring angle. This property is observable.
+         * @type {Number}
+         * @default undefined
+         */
+        this.northRingAngle = undefined;
         knockout.defineProperty(this, 'northRingAngle', {
             get : function () {
                 return this._northRingAngle;
@@ -123,6 +219,12 @@ define([
             }
         });
 
+        /**
+         * Gets or sets the current pan joystick knob distance from center. This property is observable.
+         * @type {Number}
+         * @default undefined
+         */
+        this.pointerDistance = undefined;
         knockout.defineProperty(this, 'pointerDistance', {
             get : function () {
                 return this._pointerDistance;
@@ -133,6 +235,12 @@ define([
             }
         });
 
+        /**
+         * Gets or sets the current angle at which the pan joystick knob is dragged. This property is observable.
+         * @type {Number}
+         * @default undefined
+         */
+        this.pointerDirection = undefined;
         knockout.defineProperty(this, 'pointerDirection', {
             get : function () {
                 return this._pointerDirection;
@@ -507,10 +615,20 @@ define([
         object.northRingAngle = CesiumMath.DEGREES_PER_RADIAN * object._cameraController.heading;
     }
 
+    /**
+     * Gets the ellipsoid. The ellipsoid is used to determine the size of the map in 2D and Columbus view
+     * as well as how fast to rotate the camera based on the distance to its surface.
+     * @returns {Ellipsoid} The ellipsoid.
+     */
     NavigationViewModel.prototype.getEllipsoid = function() {
         return this._ellipsoid;
     };
 
+    /**
+     * Sets the ellipsoid. The ellipsoid is used to determine the size of the map in 2D and Columbus view
+     * as well as how fast to rotate the camera based on the distance to its surface.
+     * @param {Ellipsoid} [ellipsoid=WGS84] The ellipsoid.
+     */
     NavigationViewModel.prototype.setEllipsoid = function(ellipsoid) {
         ellipsoid = ellipsoid || Ellipsoid.WGS84;
         var radius = ellipsoid.getMaximumRadius();
@@ -519,6 +637,9 @@ define([
         this._rotateRateRangeAdjustment = radius;
     };
 
+    /**
+     * @private
+     */
     NavigationViewModel.prototype.update = function(mode) {
         resetPointers(this);
         if (mode === SceneMode.SCENE2D) {
