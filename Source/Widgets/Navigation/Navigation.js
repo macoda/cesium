@@ -209,6 +209,42 @@ define([
         }
     }
 
+    /**
+     * <span style="display: block; text-align: center;">
+     * <img src="images/NavigationWidget.png" width="162" height="147" alt="" style="border: none; border-radius: 5px;" />
+     * <br />Navigation widget
+     * </span>
+     * <br /><br />
+     * The Navigation widget provides knobs for camera controls such as pan, zoom and tilt along with
+     * an interactive compass which can be used to rotate the view as well as provides a sense of direction.
+     * <br /><br />
+     * On the left side we have the slide bar for zoom. The blue knob in the center of the bar can be dragged
+     * upwards to zoom in and downwards to zoom out.
+     * The slide bar can be clicked anywhere to make the knob jump to that location.
+     * <br /><br />
+     * On the right side we have the slide bar for tilt. The blue knob in the center of the bar can be dragged
+     * upwards to tilt view and downwards to tilt it the other way.
+     * The slide bar can be clicked anywhere to make the knob jump to that location.
+     * <br /><br />
+     * In the center we have a knob for the pan control which works similar to an analog joystick.
+     * The knob can be dragged anywhere inside the circle to make it move in that direction.
+     * The speed of motion depends on its distance from the center.
+     * <br /><br />
+     * The center joystick is surrounded by a ring which acts as the compass. The "N" points towards the north.
+     * The compass can be dragged anywhere and rotated to rotate and orient the view as required.
+     * <br /><br />
+     *
+     * @alias Navigation
+     * @constructor
+     *
+     * @param {Element|String} container The DOM element or ID that will contain the widget.
+     * @param {NavigationViewModel} viewModel The view model used by this widget.
+     *
+     * @exception {DeveloperError} container is required.
+     * @exception {DeveloperError} viewModel is required.
+     *
+     * @see NavigationViewModel
+     */
     var Navigation = function(container, viewModel) {
         if (typeof container === 'undefined') {
             throw new DeveloperError('container is required.');
@@ -440,19 +476,36 @@ define([
     };
 
     defineProperties(Navigation.prototype, {
-       container : {
-           get : function() {
-               return this._container;
-           }
-       },
+        /**
+         * Gets the parent container.
+         *
+         * @memberof Navigation.prototype
+         * @type {Element}
+         */
+        container : {
+            get : function() {
+                return this._container;
+            }
+        },
 
-       viewModel : {
-           get : function() {
-               return this._viewModel;
-           }
-       }
+        /**
+         * Gets the view model.
+         *
+         * @memberof Navigation.prototype
+         * @type {NavigationViewModel}
+         */
+        viewModel : {
+            get : function() {
+                return this._viewModel;
+            }
+        }
     });
 
+    /**
+     * Resizes the widget to match the container size.
+     * This function should be called whenever the container size is changed.
+     * @memberof Navigation
+     */
     Navigation.prototype.resize = function() {
         var parentWidth = this._container.clientWidth;
         var parentHeight = this._container.clientHeight;
@@ -497,6 +550,10 @@ define([
         this._lastWidth = parentWidth;
     };
 
+    /**
+     * Updates the widget to reflect any modified CSS rules for themeing.
+     * @memberof Navigation
+     */
     Navigation.prototype.applyThemeChanges = function() {
         var defsElement = svgFromObject({
            tagName : 'defs',
