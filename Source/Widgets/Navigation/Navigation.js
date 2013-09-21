@@ -280,8 +280,8 @@ define([
         });
         this._zoomRing = zoomRing;
 
-        var zoomPlus = circularButton(60, 30, '#navigation_pathPlus');
-        var zoomMinus = circularButton(60, 168, '#navigation_pathMinus');
+        this._zoomPlus = circularButton(60, 30, '#navigation_pathPlus');
+        this._zoomMinus = circularButton(60, 168, '#navigation_pathMinus');
 
         this._zoomRingPointer = svgFromObject({
             tagName : 'circle',
@@ -295,8 +295,8 @@ define([
         zoomRingG.setAttribute('class', 'cesium-navigation-zoomRingG');
 
         zoomRingG.appendChild(zoomRing);
-        zoomRingG.appendChild(zoomPlus);
-        zoomRingG.appendChild(zoomMinus);
+        zoomRingG.appendChild(this._zoomPlus);
+        zoomRingG.appendChild(this._zoomMinus);
         zoomRingG.appendChild(this._zoomRingPointer);
 
         var tiltRing = svgFromObject({
@@ -307,8 +307,8 @@ define([
         });
         this._tiltRing = tiltRing;
 
-        var tiltTiltRect = circularButton(140, 30, '#navigation_pathTiltRect');
-        var tiltRect = circularButton(140, 168, '#navigation_pathRect');
+        this._tiltTiltRect = circularButton(140, 30, '#navigation_pathTiltRect');
+        this._tiltRect = circularButton(140, 168, '#navigation_pathRect');
 
         this._tiltRingPointer = svgFromObject({
             tagName : 'circle',
@@ -322,8 +322,8 @@ define([
         tiltRingG.setAttribute('class', 'cesium-navigation-tiltRingG');
 
         tiltRingG.appendChild(tiltRing);
-        tiltRingG.appendChild(tiltTiltRect);
-        tiltRingG.appendChild(tiltRect);
+        tiltRingG.appendChild(this._tiltTiltRect);
+        tiltRingG.appendChild(this._tiltRect);
         tiltRingG.appendChild(this._tiltRingPointer);
 
         var knobG = svgFromObject({
@@ -338,6 +338,7 @@ define([
             cy : 0,
             r : 60
         });
+        this._knobOuter = knobOuter;
 
         this._knobOuterN = svgText(0, -42, 'N');
 
@@ -358,6 +359,7 @@ define([
             cy : 0,
             r : knobInnerAndShieldSize
         });
+        this._knobShield = knobShield;
 
         this._panJoystick = svgFromObject({
             tagName : 'circle',
@@ -406,50 +408,54 @@ define([
             pointerDragged = that._zoomRingPointer;
             setPointerFromMouse(that, e);
         };
+        this._zoomMouseCallback = zoomMouseCallback;
 
         var tiltMouseCallback = function(e) {
             pointerDragged = that._tiltRingPointer;
             setPointerFromMouse(that, e);
         };
+        this._tiltMouseCallback = tiltMouseCallback;
 
         var northRingMouseCallback = function(e) {
             pointerDragged = that._knobOuterN;
             setPointerFromMouse(that, e);
         };
+        this._northRingMouseCallback = northRingMouseCallback;
 
         var panJoystickMouseCallback = function(e) {
             pointerDragged = that._panJoystick;
             setPointerFromMouse(that, e);
         };
+        this._panJoystickMouseCallback = panJoystickMouseCallback;
 
         document.addEventListener('mousemove', mouseCallback, true);
         document.addEventListener('touchmove', mouseCallback, true);
         document.addEventListener('mouseup', mouseCallback, true);
         document.addEventListener('touchend', mouseCallback, true);
-        knobOuter.addEventListener('mousedown', northRingMouseCallback, true);
-        knobOuter.addEventListener('touchstart', northRingMouseCallback, true);
+        this._knobOuter.addEventListener('mousedown', northRingMouseCallback, true);
+        this._knobOuter.addEventListener('touchstart', northRingMouseCallback, true);
         this._knobOuterN.addEventListener('mousedown', northRingMouseCallback, true);
         this._knobOuterN.addEventListener('touchstart', northRingMouseCallback, true);
         this._panJoystick.addEventListener('mousedown', panJoystickMouseCallback, true);
         this._panJoystick.addEventListener('touchstart', panJoystickMouseCallback, true);
-        knobShield.addEventListener('mousedown', panJoystickMouseCallback, true);
-        knobShield.addEventListener('touchstart', panJoystickMouseCallback, true);
+        this._knobShield.addEventListener('mousedown', panJoystickMouseCallback, true);
+        this._knobShield.addEventListener('touchstart', panJoystickMouseCallback, true);
         this._zoomRingPointer.addEventListener('mousedown', zoomMouseCallback, true);
         this._zoomRingPointer.addEventListener('touchstart', zoomMouseCallback, true);
         this._zoomRing.addEventListener('mousedown', zoomMouseCallback, true);
         this._zoomRing.addEventListener('touchstart', zoomMouseCallback, true);
-        zoomPlus.addEventListener('mousedown', zoomMouseCallback, true);
-        zoomPlus.addEventListener('touchstart', zoomMouseCallback, true);
-        zoomMinus.addEventListener('mousedown', zoomMouseCallback, true);
-        zoomMinus.addEventListener('touchstart', zoomMouseCallback, true);
+        this._zoomPlus.addEventListener('mousedown', zoomMouseCallback, true);
+        this._zoomPlus.addEventListener('touchstart', zoomMouseCallback, true);
+        this._zoomMinus.addEventListener('mousedown', zoomMouseCallback, true);
+        this._zoomMinus.addEventListener('touchstart', zoomMouseCallback, true);
         this._tiltRingPointer.addEventListener('mousedown', tiltMouseCallback, true);
         this._tiltRingPointer.addEventListener('touchstart', tiltMouseCallback, true);
         this._tiltRing.addEventListener('mousedown', tiltMouseCallback, true);
         this._tiltRing.addEventListener('touchstart', tiltMouseCallback, true);
-        tiltTiltRect.addEventListener('mousedown', tiltMouseCallback, true);
-        tiltTiltRect.addEventListener('touchstart', tiltMouseCallback, true);
-        tiltRect.addEventListener('mousedown', tiltMouseCallback, true);
-        tiltRect.addEventListener('touchstart', tiltMouseCallback, true);
+        this._tiltTiltRect.addEventListener('mousedown', tiltMouseCallback, true);
+        this._tiltTiltRect.addEventListener('touchstart', tiltMouseCallback, true);
+        this._tiltRect.addEventListener('mousedown', tiltMouseCallback, true);
+        this._tiltRect.addEventListener('touchstart', tiltMouseCallback, true);
         this._subscriptions = [
         subscribeAndEvaluate(viewModel, 'zoomRingAngle', function(value) {
             setZoomTiltRingPointer(that._zoomRingPointer, value);
@@ -500,6 +506,65 @@ define([
             }
         }
     });
+
+    /**
+     * @memberof Navigation
+     * @returns {Boolean} true if object has been destroyed, false otherwise.
+     */
+    Navigation.prototype.isDestroyed = function() {
+        return false;
+    };
+
+    /**
+     * Destroys the navigation widget. Should be called if permanently
+     * removing the widget from layout.
+     * @memberof Navigation
+     */
+    Navigation.prototype.destroy = function() {
+        var mouseCallback = this._mouseCallback;
+        var zoomMouseCallback = this._zoomMouseCallback;
+        var tiltMouseCallback = this._tiltMouseCallback;
+        var northRingMouseCallback = this._northRingMouseCallback;
+        var panJoystickMouseCallback = this._panJoystickMouseCallback;
+
+        document.removeEventListener('mousemove', mouseCallback, true);
+        document.removeEventListener('touchmove', mouseCallback, true);
+        document.removeEventListener('mouseup', mouseCallback, true);
+        document.removeEventListener('touchend', mouseCallback, true);
+        this._knobOuter.removeEventListener('mousedown', northRingMouseCallback, true);
+        this._knobOuter.removeEventListener('touchstart', northRingMouseCallback, true);
+        this._knobOuterN.removeEventListener('mousedown', northRingMouseCallback, true);
+        this._knobOuterN.removeEventListener('touchstart', northRingMouseCallback, true);
+        this._panJoystick.removeEventListener('mousedown', panJoystickMouseCallback, true);
+        this._panJoystick.removeEventListener('touchstart', panJoystickMouseCallback, true);
+        this._knobShield.removeEventListener('mousedown', panJoystickMouseCallback, true);
+        this._knobShield.removeEventListener('touchstart', panJoystickMouseCallback, true);
+        this._zoomRingPointer.removeEventListener('mousedown', zoomMouseCallback, true);
+        this._zoomRingPointer.removeEventListener('touchstart', zoomMouseCallback, true);
+        this._zoomRing.removeEventListener('mousedown', zoomMouseCallback, true);
+        this._zoomRing.removeEventListener('touchstart', zoomMouseCallback, true);
+        this._zoomPlus.removeEventListener('mousedown', zoomMouseCallback, true);
+        this._zoomPlus.removeEventListener('touchstart', zoomMouseCallback, true);
+        this._zoomMinus.removeEventListener('mousedown', zoomMouseCallback, true);
+        this._zoomMinus.removeEventListener('touchstart', zoomMouseCallback, true);
+        this._tiltRingPointer.removeEventListener('mousedown', tiltMouseCallback, true);
+        this._tiltRingPointer.removeEventListener('touchstart', tiltMouseCallback, true);
+        this._tiltRing.removeEventListener('mousedown', tiltMouseCallback, true);
+        this._tiltRing.removeEventListener('touchstart', tiltMouseCallback, true);
+        this._tiltTiltRect.removeEventListener('mousedown', tiltMouseCallback, true);
+        this._tiltTiltRect.removeEventListener('touchstart', tiltMouseCallback, true);
+        this._tiltRect.removeEventListener('mousedown', tiltMouseCallback, true);
+        this._tiltRect.removeEventListener('touchstart', tiltMouseCallback, true);
+
+        this._container.removeChild(this._svgNode);
+
+        var subscriptions = this._subscriptions;
+        for ( var i = 0; i < subscriptions.length; i++) {
+            subscriptions[i].dispose();
+        }
+
+        return destroyObject(this);
+    };
 
     /**
      * Resizes the widget to match the container size.
